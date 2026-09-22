@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blood Donor Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<nav class="navbar navbar-dark bg-danger">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">Blood Donor Management System</a>
+    </div>
+</nav>
+
+<div class="container text-center mt-5">
+    <div class="row justify-content-center g-3">
+        <div class="col-md-5">
+            <div class="alert alert-danger mb-0">
+                <strong>{{ donor_count }}</strong><br>Registered Donors
+            </div>
+        </div>
+        <div class="col-md-5">
+            <div class="alert alert-success mb-0">
+                <strong>{{ eligible_count }}</strong><br>Available Preliminary Matches
+            </div>
+        </div>
+    </div>
+
+    <h1 class="display-5 fw-bold mt-5">Blood Donor Management System</h1>
+    <p class="lead mt-3">A web-based prototype for donor registration, preliminary screening and blood-group/location search.</p>
+
+    <div class="alert alert-warning mt-4 text-start">
+        <strong>Medical Disclaimer:</strong>
+        This academic prototype performs preliminary screening only. Final blood-donation eligibility must be confirmed by authorized blood-centre medical staff.
+    </div>
+
+    <div class="mt-4">
+        <a href="/register" class="btn btn-danger btn-lg me-2">Register as Donor</a>
+        <a href="/search" class="btn btn-outline-danger btn-lg">Search Donors</a>
+        <a href="/profile" class="btn btn-outline-dark btn-lg">
+    My Profile
+</a>
+    </div>
+</div>
+
+<div class="container mt-5 mb-5">
+    <div class="row text-center g-4">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm"><div class="card-body">
+                <h4>🩸 Donor Registration</h4>
+                <p>Register donor details, contact information, donation history and screening information with consent.</p>
+            </div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm"><div class="card-body">
+                <h4>🔍 Quick Search</h4>
+                <p>Search available donors using blood group and location.</p>
+            </div></div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm"><div class="card-body">
+                <h4>🩺 Preliminary Screening</h4>
+                <p>Apply the project's configurable screening rules while keeping private medical measurements out of search results.</p>
+            </div></div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

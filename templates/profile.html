@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Profile - Blood Donor Management System</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+</head>
+
+<body class="bg-light">
+
+<div class="container mt-4 mb-5">
+
+    <!-- Page Heading -->
+    <div class="text-center mb-4">
+        <h1>My Donor Profile</h1>
+        <p class="text-muted">
+            View and update your donor information
+        </p>
+    </div>
+
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+
+    <!-- Availability Section -->
+    <div class="card shadow mb-4">
+
+        <div class="card-body">
+
+            <h4>Donor Availability</h4>
+
+            {% if donor['available'] == 1 %}
+
+                <div class="alert alert-success">
+                    <strong>Currently Available</strong>
+                    <br>
+                    You are currently shown in donor search results.
+                </div>
+
+                <form method="POST"
+                      action="/profile/availability/{{ donor['id'] }}">
+
+                    <input type="hidden"
+                           name="available"
+                           value="0">
+
+                    <button type="submit"
+                            class="btn btn-danger">
+                        Mark Myself Unavailable
+                    </button>
+
+                </form>
+
+            {% else %}
+
+                <div class="alert alert-warning">
+                    <strong>Currently Unavailable</strong>
+                    <br>
+                    You will not appear in donor search results.
+                </div>
+
+                <form method="POST"
+                      action="/profile/availability/{{ donor['id'] }}">
+
+                    <input type="hidden"
+                           name="available"
+                           value="1">
+
+                    <button type="submit"
+                            class="btn btn-success">
+                        Mark Myself Available
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- Eligibility Section -->
+    <div class="card shadow mb-4">
+
+        <div class="card-body">
+
+            <h4>Preliminary Eligibility</h4>
+
+            {% if donor['is_eligible'] == 1 %}
+
+                <div class="alert alert-success">
+                    <strong>Preliminarily Eligible</strong>
+                    <br>
+                    Your current information satisfies the
+                    project's preliminary eligibility rules.
+                </div>
+
+            {% else %}
+
+                <div class="alert alert-danger">
+                    <strong>Not Preliminarily Eligible</strong>
+                    <br>
+                    Your current information does not satisfy the
+                    project's preliminary eligibility rules.
+                </div>
+
+            {% endif %}
+
+            <p class="text-muted mb-0">
+                Final blood donation eligibility must be confirmed
+                by authorized medical staff.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <!-- Edit Profile -->
+    <div class="card shadow">
+
+        <div class="card-body">
+
+            <h4 class="mb-4">Edit My Details</h4>
+
+            <form method="POST"
+                  action="/profile/update/{{ donor['id'] }}">
+
+                <!-- Name -->
+                <div class="mb-3">
+                    <label class="form-label">
+                        Full Name
+                    </label>
+
+                    <input type="text"
+                           name="name"
+                           class="form-control"
+                           value="{{ donor['name'] }}"
+                           required>
+                </div>
+
+
+                <!-- Blood Group -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Blood Group
+                    </label>
+
+                    <select name="blood_group"
+                            class="form-select"
+                            required>
+
+                        <option value="A+"
+                            {% if donor['blood_group'] == 'A+' %}selected{% endif %}>
+                            A+
+                        </option>
+
+                        <option value="A-"
+                            {% if donor['blood_group'] == 'A-' %}selected{% endif %}>
+                            A-
+                        </option>
+
+                        <option value="B+"
+                            {% if donor['blood_group'] == 'B+' %}selected{% endif %}>
+                            B+
+                        </option>
+
+                        <option value="B-"
+                            {% if donor['blood_group'] == 'B-' %}selected{% endif %}>
+                            B-
+                        </option>
+
+                        <option value="AB+"
+                            {% if donor['blood_group'] == 'AB+' %}selected{% endif %}>
+                            AB+
+                        </option>
+
+                        <option value="AB-"
+                            {% if donor['blood_group'] == 'AB-' %}selected{% endif %}>
+                            AB-
+                        </option>
+
+                        <option value="O+"
+                            {% if donor['blood_group'] == 'O+' %}selected{% endif %}>
+                            O+
+                        </option>
+
+                        <option value="O-"
+                            {% if donor['blood_group'] == 'O-' %}selected{% endif %}>
+                            O-
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- Age -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Age
+                    </label>
+
+                    <input type="number"
+                           name="age"
+                           class="form-control"
+                           value="{{ donor['age'] }}"
+                           min="18"
+                           required>
+
+                </div>
+
+
+                <!-- Height -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Height (cm)
+                    </label>
+
+                    <input type="number"
+                           step="0.1"
+                           name="height_cm"
+                           class="form-control"
+                           value="{{ donor['height'] }}"
+                           required>
+
+                </div>
+
+
+                <!-- Weight -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Weight (kg)
+                    </label>
+
+                    <input type="number"
+                           step="0.1"
+                           name="weight"
+                           class="form-control"
+                           value="{{ donor['weight'] }}"
+                           required>
+
+                </div>
+
+
+                <!-- Last Donation -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Last Whole-Blood Donation Date
+                    </label>
+
+                    <input type="date"
+                           name="last_donation_date"
+                           class="form-control"
+                           value="{{ donor['last_donation_date'] or '' }}">
+
+                </div>
+
+
+                <!-- Phone -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Phone Number
+                    </label>
+
+                    <input type="text"
+                           name="phone"
+                           class="form-control"
+                           value="{{ donor['phone'] }}"
+                           required>
+
+                </div>
+
+
+                <!-- Email -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Email
+                    </label>
+
+                    <input type="email"
+                           name="email"
+                           class="form-control"
+                           value="{{ donor['email'] or '' }}">
+
+                </div>
+
+
+                <!-- Location -->
+                <div class="mb-3">
+
+                    <label class="form-label">
+                        Location
+                    </label>
+
+                    <input type="text"
+                           name="location"
+                           class="form-control"
+                           value="{{ donor['location'] }}"
+                           required>
+
+                </div>
+
+
+                <!-- Submit -->
+                <button type="submit"
+                        class="btn btn-primary">
+                    Save Changes
+                </button>
+
+                <a href="/"
+                   class="btn btn-secondary">
+                    Back to Home
+                </a>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
