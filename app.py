@@ -323,11 +323,30 @@ def update_profile(donor_id):
         bmi_status = "Obesity"
 
     # Check preliminary eligibility again
-    eligible = check_eligibility(
-        age,
-        weight,
-        last_donation_date
-    )
+    conn = get_db()
+
+    existing_health = conn.execute(
+        """
+        SELECT screening_date, hemoglobin, pallor_observed
+        FROM donors
+        WHERE id = ?
+        """,
+        (donor_id,)
+    ).fetchone()
+
+    conn.close()
+
+    if existing_health:
+        eligible, reason = check_eligibility(
+            age,
+            weight,
+            last_donation_date,
+            existing_health["screening_date"],
+            existing_health["hemoglobin"],
+            existing_health["pallor_observed"]
+        )
+    else:
+        eligible = False
 
     conn = get_db()
 
