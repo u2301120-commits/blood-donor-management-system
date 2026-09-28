@@ -4,6 +4,7 @@ from datetime import date
 from pathlib import Path
 
 app = Flask(__name__)
+
 app.secret_key = "minor_project_secret_key_2026"
 
 # Keep the database beside app.py, even if Flask is started from another folder.
@@ -42,8 +43,14 @@ MIN_DAYS_BETWEEN_DONATIONS = 90
 MAX_SCREENING_AGE_DAYS = 15
 
 
-def check_eligibility(age, weight, last_donation_date,
-                      screening_date, hemoglobin, pallor_observed):
+def check_eligibility(
+    age,
+    weight,
+    last_donation_date,
+    screening_date,
+    hemoglobin,
+    pallor_observed
+):
     """Return (eligible, reason) using the project's preliminary rules."""
 
     if age < MIN_AGE:
@@ -209,15 +216,23 @@ def register():
             location = request.form.get("location", "").strip()
 
             age = int(request.form.get("age", "0"))
-            height_cm = float(request.form.get("height_cm", "0"))
-            weight = float(request.form.get("weight", "0"))
+
+            height_cm = float(
+                request.form.get("height_cm", "0")
+            )
+
+            weight = float(
+                request.form.get("weight", "0")
+            )
 
             last_donation_date = request.form.get(
-                "last_donation_date", ""
+                "last_donation_date",
+                ""
             ).strip()
 
             screening_date = request.form.get(
-                "screening_date", ""
+                "screening_date",
+                ""
             ).strip()
 
             hemoglobin = float(
@@ -225,7 +240,8 @@ def register():
             )
 
             pallor_observed = request.form.get(
-                "pallor_observed", ""
+                "pallor_observed",
+                ""
             ).strip()
 
             consent = request.form.get("consent") == "on"
@@ -276,6 +292,7 @@ def register():
             # as a medical diagnosis or as the sole donor decision.
 
             height_m = height_cm / 100
+
             bmi = round(
                 weight / (height_m ** 2),
                 2
@@ -283,10 +300,13 @@ def register():
 
             if bmi < 18.5:
                 bmi_status = "Underweight"
+
             elif bmi < 25:
                 bmi_status = "Normal"
+
             elif bmi < 30:
                 bmi_status = "Overweight"
+
             else:
                 bmi_status = "Obesity"
 
@@ -404,6 +424,7 @@ def profile():
         conn.close()
 
         if not donor:
+
             flash(
                 "Invalid Donor ID or Phone Number.",
                 "danger"
@@ -436,8 +457,14 @@ def update_profile(donor_id):
         location = request.form["location"]
 
         age = int(request.form["age"])
-        height_cm = float(request.form["height_cm"])
-        weight = float(request.form["weight"])
+
+        height_cm = float(
+            request.form["height_cm"]
+        )
+
+        weight = float(
+            request.form["weight"]
+        )
 
         last_donation_date = request.form.get(
             "last_donation_date",
