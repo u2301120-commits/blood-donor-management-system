@@ -2,340 +2,622 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>My Profile - Blood Donor Management System</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
+    <title>Donor Profile</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+
 </head>
 
-<body class="bg-light">
 
-<div class="container mt-4 mb-5">
+<body>
 
-    <!-- Page Heading -->
-    <div class="text-center mb-4">
-        <h1>My Donor Profile</h1>
-        <p class="text-muted">
-            View and update your donor information
-        </p>
+<nav class="navbar navbar-dark bg-danger">
+
+    <div class="container">
+
+        <a class="navbar-brand fw-bold"
+           href="/">
+            Blood Donor Management System
+        </a>
+
     </div>
 
-
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="alert alert-{{ category }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+</nav>
 
 
-    <!-- Availability Section -->
-    <div class="card shadow mb-4">
+<div class="container mt-5">
 
-        <div class="card-body">
+    <div class="row justify-content-center">
 
-            <h4>Donor Availability</h4>
+        <div class="col-md-10">
 
-            {% if donor['available'] == 1 %}
 
-                <div class="alert alert-success">
-                    <strong>Currently Available</strong>
-                    <br>
-                    You are currently shown in donor search results.
-                </div>
+            <!-- FLASH MESSAGES -->
 
-                <form method="POST"
-                      action="/profile/availability/{{ donor['id'] }}">
+            {% with messages = get_flashed_messages(with_categories=true) %}
 
-                    <input type="hidden"
-                           name="available"
-                           value="0">
+                {% for category, message in messages %}
 
-                    <button type="submit"
-                            class="btn btn-danger">
-                        Mark Myself Unavailable
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            {% endwith %}
+
+
+            <!-- PROFILE TITLE -->
+
+            <h2 class="text-center mb-4">
+                Donor Profile
+            </h2>
+
+
+            <!-- NOTIFICATION CARD -->
+
+            <div class="card shadow mb-4">
+
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        Emergency Notifications
+                    </h5>
+
+                    <p class="text-muted">
+                        Enable notifications to receive emergency
+                        blood donation requests matching your
+                        donor details.
+                    </p>
+
+                    <button
+                        type="button"
+                        id="enableNotifications"
+                        class="btn btn-danger">
+
+                        Enable Notifications
+
                     </button>
 
-                </form>
-
-            {% else %}
-
-                <div class="alert alert-warning">
-                    <strong>Currently Unavailable</strong>
-                    <br>
-                    You will not appear in donor search results.
-                </div>
-
-                <form method="POST"
-                      action="/profile/availability/{{ donor['id'] }}">
-
-                    <input type="hidden"
-                           name="available"
-                           value="1">
-
-                    <button type="submit"
-                            class="btn btn-success">
-                        Mark Myself Available
-                    </button>
-
-                </form>
-
-            {% endif %}
-
-        </div>
-
-    </div>
-
-
-    <!-- Eligibility Section -->
-    <div class="card shadow mb-4">
-
-        <div class="card-body">
-
-            <h4>Preliminary Eligibility</h4>
-
-            {% if donor['is_eligible'] == 1 %}
-
-                <div class="alert alert-success">
-                    <strong>Preliminarily Eligible</strong>
-                    <br>
-                    Your current information satisfies the
-                    project's preliminary eligibility rules.
-                </div>
-
-            {% else %}
-
-                <div class="alert alert-danger">
-                    <strong>Not Preliminarily Eligible</strong>
-                    <br>
-                    Your current information does not satisfy the
-                    project's preliminary eligibility rules.
-                </div>
-
-            {% endif %}
-
-            <p class="text-muted mb-0">
-                Final blood donation eligibility must be confirmed
-                by authorized medical staff.
-            </p>
-
-        </div>
-
-    </div>
-
-
-    <!-- Edit Profile -->
-    <div class="card shadow">
-
-        <div class="card-body">
-
-            <h4 class="mb-4">Edit My Details</h4>
-
-            <form method="POST"
-                  action="/profile/update/{{ donor['id'] }}">
-
-                <!-- Name -->
-                <div class="mb-3">
-                    <label class="form-label">
-                        Full Name
-                    </label>
-
-                    <input type="text"
-                           name="name"
-                           class="form-control"
-                           value="{{ donor['name'] }}"
-                           required>
-                </div>
-
-
-                <!-- Blood Group -->
-                <div class="mb-3">
-
-                    <label class="form-label">
-                        Blood Group
-                    </label>
-
-                    <select name="blood_group"
-                            class="form-select"
-                            required>
-
-                        <option value="A+"
-                            {% if donor['blood_group'] == 'A+' %}selected{% endif %}>
-                            A+
-                        </option>
-
-                        <option value="A-"
-                            {% if donor['blood_group'] == 'A-' %}selected{% endif %}>
-                            A-
-                        </option>
-
-                        <option value="B+"
-                            {% if donor['blood_group'] == 'B+' %}selected{% endif %}>
-                            B+
-                        </option>
-
-                        <option value="B-"
-                            {% if donor['blood_group'] == 'B-' %}selected{% endif %}>
-                            B-
-                        </option>
-
-                        <option value="AB+"
-                            {% if donor['blood_group'] == 'AB+' %}selected{% endif %}>
-                            AB+
-                        </option>
-
-                        <option value="AB-"
-                            {% if donor['blood_group'] == 'AB-' %}selected{% endif %}>
-                            AB-
-                        </option>
-
-                        <option value="O+"
-                            {% if donor['blood_group'] == 'O+' %}selected{% endif %}>
-                            O+
-                        </option>
-
-                        <option value="O-"
-                            {% if donor['blood_group'] == 'O-' %}selected{% endif %}>
-                            O-
-                        </option>
-
-                    </select>
+                    <div
+                        id="notificationStatus"
+                        class="mt-3">
+                    </div>
 
                 </div>
 
-
-                <!-- Age -->
-                <div class="mb-3">
-
-                    <label class="form-label">
-                        Age
-                    </label>
-
-                    <input type="number"
-                           name="age"
-                           class="form-control"
-                           value="{{ donor['age'] }}"
-                           min="18"
-                           required>
-
-                </div>
+            </div>
 
 
-                <!-- Height -->
-                <div class="mb-3">
+            <!-- AVAILABILITY -->
 
-                    <label class="form-label">
-                        Height (cm)
-                    </label>
+            <div class="card shadow mb-4">
 
-                    <input type="number"
-                           step="0.1"
-                           name="height_cm"
-                           class="form-control"
-                           value="{{ donor['height'] }}"
-                           required>
+                <div class="card-body">
 
-                </div>
+                    <h5 class="card-title">
+                        Availability Status
+                    </h5>
 
+                    <p>
+                        Current status:
 
-                <!-- Weight -->
-                <div class="mb-3">
+                        {% if donor['available'] == 1 %}
 
-                    <label class="form-label">
-                        Weight (kg)
-                    </label>
+                            <span class="badge bg-success">
+                                Available
+                            </span>
 
-                    <input type="number"
-                           step="0.1"
-                           name="weight"
-                           class="form-control"
-                           value="{{ donor['weight'] }}"
-                           required>
+                        {% else %}
 
-                </div>
+                            <span class="badge bg-secondary">
+                                Unavailable
+                            </span>
+
+                        {% endif %}
+
+                    </p>
 
 
-                <!-- Last Donation -->
-                <div class="mb-3">
+                    <form
+                        method="POST"
+                        action="/profile/availability/{{ donor['id'] }}">
 
-                    <label class="form-label">
-                        Last Whole-Blood Donation Date
-                    </label>
+                        {% if donor['available'] == 1 %}
 
-                    <input type="date"
-                           name="last_donation_date"
-                           class="form-control"
-                           value="{{ donor['last_donation_date'] or '' }}">
+                            <input
+                                type="hidden"
+                                name="available"
+                                value="0">
 
-                </div>
+                            <button
+                                type="submit"
+                                class="btn btn-outline-secondary">
 
+                                Mark as Unavailable
 
-                <!-- Phone -->
-                <div class="mb-3">
+                            </button>
 
-                    <label class="form-label">
-                        Phone Number
-                    </label>
+                        {% else %}
 
-                    <input type="text"
-                           name="phone"
-                           class="form-control"
-                           value="{{ donor['phone'] }}"
-                           required>
+                            <input
+                                type="hidden"
+                                name="available"
+                                value="1">
+
+                            <button
+                                type="submit"
+                                class="btn btn-success">
+
+                                Mark as Available
+
+                            </button>
+
+                        {% endif %}
+
+                    </form>
 
                 </div>
 
+            </div>
 
-                <!-- Email -->
-                <div class="mb-3">
 
-                    <label class="form-label">
-                        Email
-                    </label>
+            <!-- PRELIMINARY ELIGIBILITY -->
 
-                    <input type="email"
-                           name="email"
-                           class="form-control"
-                           value="{{ donor['email'] or '' }}">
+            <div class="card shadow mb-4">
+
+                <div class="card-body">
+
+                    <h5 class="card-title">
+                        Preliminary Eligibility
+                    </h5>
+
+                    {% if donor['is_eligible'] == 1 %}
+
+                        <div class="alert alert-success">
+                            Passed preliminary screening.
+                        </div>
+
+                    {% else %}
+
+                        <div class="alert alert-warning">
+                            Does not currently pass the
+                            project's preliminary screening rules.
+                        </div>
+
+                    {% endif %}
+
+                    <p class="text-muted mb-0">
+
+                        Final donation eligibility must be
+                        confirmed by authorized blood-centre
+                        staff.
+
+                    </p>
 
                 </div>
 
+            </div>
 
-                <!-- Location -->
-                <div class="mb-3">
 
-                    <label class="form-label">
-                        Location
-                    </label>
+            <!-- EDIT PROFILE -->
 
-                    <input type="text"
-                           name="location"
-                           class="form-control"
-                           value="{{ donor['location'] }}"
-                           required>
+            <div class="card shadow mb-5">
+
+                <div class="card-body">
+
+                    <h5 class="card-title mb-4">
+                        Edit Profile
+                    </h5>
+
+
+                    <form
+                        method="POST"
+                        action="/profile/update/{{ donor['id'] }}">
+
+
+                        <!-- BASIC DETAILS -->
+
+                        <h6 class="border-bottom pb-2">
+                            Basic Details
+                        </h6>
+
+
+                        <div class="row">
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Name
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="name"
+                                    class="form-control"
+                                    value="{{ donor['name'] }}"
+                                    required>
+
+                            </div>
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Blood Group
+                                </label>
+
+                                <select
+                                    name="blood_group"
+                                    class="form-select"
+                                    required>
+
+                                    <option value="A+"
+                                        {% if donor['blood_group'] == 'A+' %}selected{% endif %}>
+                                        A+
+                                    </option>
+
+                                    <option value="A-"
+                                        {% if donor['blood_group'] == 'A-' %}selected{% endif %}>
+                                        A-
+                                    </option>
+
+                                    <option value="B+"
+                                        {% if donor['blood_group'] == 'B+' %}selected{% endif %}>
+                                        B+
+                                    </option>
+
+                                    <option value="B-"
+                                        {% if donor['blood_group'] == 'B-' %}selected{% endif %}>
+                                        B-
+                                    </option>
+
+                                    <option value="AB+"
+                                        {% if donor['blood_group'] == 'AB+' %}selected{% endif %}>
+                                        AB+
+                                    </option>
+
+                                    <option value="AB-"
+                                        {% if donor['blood_group'] == 'AB-' %}selected{% endif %}>
+                                        AB-
+                                    </option>
+
+                                    <option value="O+"
+                                        {% if donor['blood_group'] == 'O+' %}selected{% endif %}>
+                                        O+
+                                    </option>
+
+                                    <option value="O-"
+                                        {% if donor['blood_group'] == 'O-' %}selected{% endif %}>
+                                        O-
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Gender
+                                </label>
+
+                                <select
+                                    name="gender"
+                                    class="form-select"
+                                    required>
+
+                                    <option value="Female"
+                                        {% if donor['gender'] == 'Female' %}selected{% endif %}>
+                                        Female
+                                    </option>
+
+                                    <option value="Male"
+                                        {% if donor['gender'] == 'Male' %}selected{% endif %}>
+                                        Male
+                                    </option>
+
+                                    <option value="Other"
+                                        {% if donor['gender'] == 'Other' %}selected{% endif %}>
+                                        Other
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Age
+                                </label>
+
+                                <input
+                                    type="number"
+                                    name="age"
+                                    class="form-control"
+                                    value="{{ donor['age'] }}"
+                                    min="18"
+                                    max="65"
+                                    required>
+
+                            </div>
+
+
+                        </div>
+
+
+                        <!-- BODY DETAILS -->
+
+                        <h6 class="border-bottom pb-2 mt-4">
+                            Body Details
+                        </h6>
+
+
+                        <div class="row">
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Height (cm)
+                                </label>
+
+                                <input
+                                    type="number"
+                                    name="height_cm"
+                                    class="form-control"
+                                    value="{{ donor['height'] or '' }}"
+                                    min="100"
+                                    max="250"
+                                    step="0.1"
+                                    required>
+
+                            </div>
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Weight (kg)
+                                </label>
+
+                                <input
+                                    type="number"
+                                    name="weight"
+                                    class="form-control"
+                                    value="{{ donor['weight'] }}"
+                                    min="20"
+                                    max="250"
+                                    step="0.1"
+                                    required>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- DONATION HISTORY -->
+
+                        <h6 class="border-bottom pb-2 mt-4">
+                            Donation History
+                        </h6>
+
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+                                Last Whole-Blood Donation Date
+                            </label>
+
+                            <input
+                                type="date"
+                                name="last_donation_date"
+                                class="form-control"
+                                value="{{ donor['last_donation_date'] or '' }}">
+
+                            <small class="text-muted">
+                                Leave blank if this is your first donation.
+                            </small>
+
+                        </div>
+
+
+                        <!-- HEALTH SCREENING -->
+
+                        <h6 class="border-bottom pb-2 mt-4">
+                            Recent Health Screening
+                        </h6>
+
+
+                        <div class="row">
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Health Screening Date
+                                </label>
+
+                                <input
+                                    type="date"
+                                    name="screening_date"
+                                    class="form-control"
+                                    value="{{ donor['screening_date'] or '' }}"
+                                    required>
+
+                            </div>
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Hemoglobin (g/dL)
+                                </label>
+
+                                <input
+                                    type="number"
+                                    name="hemoglobin"
+                                    class="form-control"
+                                    value="{{ donor['hemoglobin'] or '' }}"
+                                    min="0"
+                                    max="25"
+                                    step="0.1"
+                                    required>
+
+                            </div>
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Pallor Observed
+                                </label>
+
+                                <select
+                                    name="pallor_observed"
+                                    class="form-select"
+                                    required>
+
+                                    <option value="No"
+                                        {% if donor['pallor_observed'] == 'No' %}selected{% endif %}>
+                                        No
+                                    </option>
+
+                                    <option value="Yes"
+                                        {% if donor['pallor_observed'] == 'Yes' %}selected{% endif %}>
+                                        Yes
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- CONSENT -->
+
+                        <div class="form-check mt-3 mb-4">
+
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                name="consent"
+                                id="consent"
+                                {% if donor['consent'] == 1 %}checked{% endif %}>
+
+                            <label
+                                class="form-check-label"
+                                for="consent">
+
+                                I consent to the use of my donor
+                                information for this project.
+
+                            </label>
+
+                        </div>
+
+
+                        <!-- CONTACT DETAILS -->
+
+                        <h6 class="border-bottom pb-2 mt-4">
+                            Contact Details
+                        </h6>
+
+
+                        <div class="row">
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Phone
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="phone"
+                                    class="form-control"
+                                    value="{{ donor['phone'] }}"
+                                    required>
+
+                            </div>
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Email
+                                </label>
+
+                                <input
+                                    type="email"
+                                    name="email"
+                                    class="form-control"
+                                    value="{{ donor['email'] or '' }}">
+
+                            </div>
+
+
+                            <div class="col-md-12 mb-3">
+
+                                <label class="form-label">
+                                    Location
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="location"
+                                    class="form-control"
+                                    value="{{ donor['location'] }}"
+                                    required>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- BUTTONS -->
+
+                        <div class="d-flex gap-2 mt-4">
+
+                            <button
+                                type="submit"
+                                class="btn btn-danger">
+
+                                Save Changes
+
+                            </button>
+
+
+                            <a
+                                href="/"
+                                class="btn btn-outline-secondary">
+
+                                Back Home
+
+                            </a>
+
+                        </div>
+
+
+                    </form>
 
                 </div>
 
-
-                <!-- Submit -->
-                <button type="submit"
-                        class="btn btn-primary">
-                    Save Changes
-                </button>
-
-                <a href="/"
-                   class="btn btn-secondary">
-                    Back to Home
-                </a>
-
-            </form>
+            </div>
 
         </div>
 
@@ -343,5 +625,159 @@
 
 </div>
 
+
+<!-- FIREBASE COMPAT SDK -->
+
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js"></script>
+
+
+<script>
+
+    // --------------------------------------------------
+    // FIREBASE CONFIGURATION
+    // --------------------------------------------------
+
+    const firebaseConfig = {
+
+        apiKey: "AIzaSyA7gIg_Th_eXK0plcAymJI2jy1IqAakauY",
+
+        authDomain:
+            "blood-donor-management-s-c43cb.firebaseapp.com",
+
+        projectId:
+            "blood-donor-management-s-c43cb",
+
+        storageBucket:
+            "blood-donor-management-s-c43cb.firebasestorage.app",
+
+        messagingSenderId:
+            "333470584402",
+
+        appId:
+            "1:333470584402:web:1dbbc0319ca86e34e2198b"
+
+    };
+
+
+    firebase.initializeApp(firebaseConfig);
+
+
+    const messaging = firebase.messaging();
+
+
+    // --------------------------------------------------
+    // ENABLE NOTIFICATIONS
+    // --------------------------------------------------
+
+    document
+        .getElementById("enableNotifications")
+        .addEventListener("click", async function () {
+
+            const status =
+                document.getElementById("notificationStatus");
+
+            try {
+
+                status.innerHTML =
+                    '<div class="alert alert-info">' +
+                    'Requesting notification permission...' +
+                    '</div>';
+
+
+                // Ask browser for notification permission
+
+                const permission =
+                    await Notification.requestPermission();
+
+
+                if (permission !== "granted") {
+
+                    status.innerHTML =
+                        '<div class="alert alert-warning">' +
+                        'Notification permission was not granted.' +
+                        '</div>';
+
+                    return;
+                }
+
+
+                // Register Firebase service worker
+
+                const serviceWorkerRegistration =
+                    await navigator.serviceWorker.register(
+                        "/firebase-messaging-sw.js"
+                    );
+
+
+                // Get FCM registration token
+
+                const token =
+                    await messaging.getToken({
+
+                        vapidKey:
+                            "BI4iBAYsKL4aFYKRjVNEXflHm4GYoiWIC61I08AUf82NdnfWjcsEiu2i7Y4BZZh1Sg-9zIbWl8geFHG60ImNXfM",
+
+                        serviceWorkerRegistration:
+                            serviceWorkerRegistration
+
+                    });
+
+
+                if (!token) {
+
+                    status.innerHTML =
+                        '<div class="alert alert-warning">' +
+                        'Firebase could not generate a notification token.' +
+                        '</div>';
+
+                    return;
+                }
+
+
+                // Temporarily store token in browser
+
+                localStorage.setItem(
+                    "bloodDonorFCMToken",
+                    token
+                );
+
+
+                console.log(
+                    "FCM Registration Token:",
+                    token
+                );
+
+
+                status.innerHTML =
+                    '<div class="alert alert-success">' +
+                    '<strong>Notifications enabled!</strong><br>' +
+                    'This browser is now registered for emergency notifications.' +
+                    '</div>';
+
+
+            } catch (error) {
+
+                console.error(
+                    "Notification setup error:",
+                    error
+                );
+
+
+                status.innerHTML =
+                    '<div class="alert alert-danger">' +
+                    '<strong>Could not enable notifications.</strong><br>' +
+                    'Please check the browser permission and Firebase configuration.' +
+                    '</div>';
+
+            }
+
+        });
+
+</script>
+
+
 </body>
+
 </html>
