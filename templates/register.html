@@ -16,7 +16,6 @@
 
 </head>
 
-
 <body>
 
 <nav class="navbar navbar-dark bg-danger">
@@ -61,7 +60,7 @@
 
                 <div class="card-body">
 
-                    <form method="POST">
+                    <form method="POST" id="registrationForm">
 
 
                         <!-- BASIC DETAILS -->
@@ -111,7 +110,7 @@
                                         "O+","O-"
                                     ] %}
 
-                                        <option>
+                                        <option value="{{ bg }}">
                                             {{ bg }}
                                         </option>
 
@@ -137,15 +136,15 @@
                                         Select
                                     </option>
 
-                                    <option>
+                                    <option value="Male">
                                         Male
                                     </option>
 
-                                    <option>
+                                    <option value="Female">
                                         Female
                                     </option>
 
-                                    <option>
+                                    <option value="Other">
                                         Other
                                     </option>
 
@@ -156,23 +155,26 @@
                         </div>
 
 
-                        <!-- AGE / HEIGHT / WEIGHT -->
+                        <!-- DATE OF BIRTH / HEIGHT / WEIGHT -->
 
                         <div class="row">
 
                             <div class="col-md-4 mb-3">
 
                                 <label class="form-label">
-                                    Age
+                                    Date of Birth
                                 </label>
 
                                 <input
-                                    type="number"
-                                    name="age"
+                                    type="date"
+                                    name="date_of_birth"
+                                    id="date_of_birth"
                                     class="form-control"
-                                    min="18"
-                                    max="65"
                                     required>
+
+                                <small class="text-muted">
+                                    Age will be calculated automatically.
+                                </small>
 
                             </div>
 
@@ -211,12 +213,55 @@
                                     required>
 
                                 <small class="text-muted">
-
-                                    Minimum donor weight used
-                                    by this prototype:
-                                    45 kg.
-
+                                    Minimum weight: 45 kg.
                                 </small>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- ACCOUNT PASSWORD -->
+
+                        <h5 class="border-bottom pb-2 mt-4">
+                            Account Security
+                        </h5>
+
+
+                        <div class="row">
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Password
+                                </label>
+
+                                <input
+                                    type="password"
+                                    name="password"
+                                    class="form-control"
+                                    minlength="6"
+                                    required>
+
+                                <small class="text-muted">
+                                    Minimum 6 characters.
+                                </small>
+
+                            </div>
+
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label">
+                                    Confirm Password
+                                </label>
+
+                                <input
+                                    type="password"
+                                    name="confirm_password"
+                                    class="form-control"
+                                    minlength="6"
+                                    required>
 
                             </div>
 
@@ -228,9 +273,7 @@
                         <div class="mb-3">
 
                             <label class="form-label">
-
                                 Last Whole-Blood Donation Date
-
                             </label>
 
                             <input
@@ -239,10 +282,7 @@
                                 class="form-control">
 
                             <small class="text-muted">
-
-                                Leave blank if this is your
-                                first donation.
-
+                                Leave blank if this is your first donation.
                             </small>
 
                         </div>
@@ -251,26 +291,13 @@
                         <!-- HEALTH SCREENING -->
 
                         <h5 class="border-bottom pb-2 mt-4">
-
                             Recent Health Screening
-
                         </h5>
 
 
                         <div class="alert alert-info">
-
-                            The project requires a health
-                            screening within the last
-                            <strong>15 days</strong>
-                            because this was specified by
-                            the project guide.
-
-                            <br><br>
-
-                            This is a project screening rule,
-                            not a claim that every blood centre
-                            uses a 15-day certificate.
-
+                            Enter your most recent health screening
+                            information for preliminary eligibility checking.
                         </div>
 
 
@@ -279,26 +306,7 @@
                             <div class="col-md-6 mb-3">
 
                                 <label class="form-label">
-
-                                    Health Screening Date
-
-                                </label>
-
-                                <input
-                                    type="date"
-                                    name="screening_date"
-                                    class="form-control"
-                                    required>
-
-                            </div>
-
-
-                            <div class="col-md-6 mb-3">
-
-                                <label class="form-label">
-
                                     Hemoglobin (g/dL)
-
                                 </label>
 
                                 <input
@@ -311,10 +319,7 @@
                                     required>
 
                                 <small class="text-muted">
-
-                                    Prototype threshold:
-                                    12.5 g/dL.
-
+                                    Minimum threshold: 12.5 g/dL.
                                 </small>
 
                             </div>
@@ -327,10 +332,8 @@
                         <div class="mb-3">
 
                             <label class="form-label">
-
                                 Visible pallor / signs requiring
                                 anemia assessment?
-
                             </label>
 
                             <select
@@ -357,10 +360,8 @@
                             </select>
 
                             <small class="text-muted">
-
                                 Pallor is a screening observation,
                                 not a diagnosis.
-
                             </small>
 
                         </div>
@@ -369,9 +370,7 @@
                         <!-- CONTACT DETAILS -->
 
                         <h5 class="border-bottom pb-2 mt-4">
-
                             Contact Details
-
                         </h5>
 
 
@@ -380,9 +379,7 @@
                             <div class="col-md-6 mb-3">
 
                                 <label class="form-label">
-
                                     Phone Number
-
                                 </label>
 
                                 <input
@@ -398,16 +395,24 @@
                             <div class="col-md-6 mb-3">
 
                                 <label class="form-label">
-
                                     Email
-
                                 </label>
 
                                 <input
                                     type="email"
                                     name="email"
+                                    id="email"
                                     class="form-control"
-                                    maxlength="150">
+                                    maxlength="150"
+                                    required>
+
+                                <!-- LIVE EMAIL MESSAGE -->
+
+                                <div
+                                    id="emailMessage"
+                                    class="mt-2"
+                                    style="display: none;">
+                                </div>
 
                             </div>
 
@@ -479,6 +484,7 @@
 
                             <button
                                 type="submit"
+                                id="registerButton"
                                 class="btn btn-danger">
 
                                 Register Donor
@@ -499,6 +505,147 @@
     </div>
 
 </div>
+
+
+<!-- ==================================================
+     LIVE EMAIL AVAILABILITY CHECK
+     ================================================== -->
+
+<script>
+
+const emailInput = document.getElementById("email");
+const emailMessage = document.getElementById("emailMessage");
+const registrationForm = document.getElementById("registrationForm");
+const registerButton = document.getElementById("registerButton");
+
+let emailTimer = null;
+let emailExists = false;
+
+
+emailInput.addEventListener("input", function () {
+
+    const email = emailInput.value.trim();
+
+    clearTimeout(emailTimer);
+
+    // Clear everything while typing an incomplete email
+    if (email.length < 5) {
+
+        emailMessage.style.display = "none";
+        emailMessage.innerHTML = "";
+
+        emailInput.classList.remove("is-valid");
+        emailInput.classList.remove("is-invalid");
+
+        emailExists = false;
+        registerButton.disabled = false;
+
+        return;
+    }
+
+
+    // Wait 500 milliseconds after typing stops
+    emailTimer = setTimeout(function () {
+
+        if (!emailInput.checkValidity()) {
+
+            emailMessage.style.display = "none";
+
+            emailInput.classList.remove("is-valid");
+            emailInput.classList.remove("is-invalid");
+
+            emailExists = false;
+            registerButton.disabled = false;
+
+            return;
+        }
+
+
+        fetch(
+            "/check-email?email=" +
+            encodeURIComponent(email)
+        )
+
+        .then(function (response) {
+            return response.json();
+        })
+
+        .then(function (data) {
+
+            if (data.exists) {
+
+                emailExists = true;
+
+                emailMessage.style.display = "block";
+
+                emailMessage.className =
+                    "mt-2 text-danger fw-semibold";
+
+                emailMessage.innerHTML =
+                    "⚠️ This email is already registered.";
+
+                emailInput.classList.remove("is-valid");
+                emailInput.classList.add("is-invalid");
+
+                registerButton.disabled = true;
+
+            } else {
+
+                // Do NOT show any message for a new email
+
+                emailExists = false;
+
+                emailMessage.style.display = "none";
+                emailMessage.innerHTML = "";
+
+                emailInput.classList.remove("is-invalid");
+                emailInput.classList.remove("is-valid");
+
+                registerButton.disabled = false;
+            }
+
+        })
+
+        .catch(function () {
+
+            emailMessage.style.display = "none";
+
+            emailInput.classList.remove("is-valid");
+            emailInput.classList.remove("is-invalid");
+
+            emailExists = false;
+            registerButton.disabled = false;
+
+        });
+
+    }, 500);
+
+});
+
+
+/* Prevent submission if email is already registered */
+
+registrationForm.addEventListener("submit", function (event) {
+
+    if (emailExists) {
+
+        event.preventDefault();
+
+        emailInput.focus();
+
+        emailMessage.style.display = "block";
+
+        emailMessage.className =
+            "mt-2 text-danger fw-semibold";
+
+        emailMessage.innerHTML =
+            "⚠️ This email is already registered.";
+
+    }
+
+});
+
+</script>
 
 </body>
 

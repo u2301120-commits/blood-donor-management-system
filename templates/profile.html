@@ -435,29 +435,14 @@
 
 
                         <!-- HEALTH SCREENING -->
+                        <!-- Health Screening Date REMOVED -->
 
                         <h6 class="border-bottom pb-2 mt-4">
-                            Recent Health Screening
+                            Health Screening
                         </h6>
 
 
                         <div class="row">
-
-
-                            <div class="col-md-6 mb-3">
-
-                                <label class="form-label">
-                                    Health Screening Date
-                                </label>
-
-                                <input
-                                    type="date"
-                                    name="screening_date"
-                                    class="form-control"
-                                    value="{{ donor['screening_date'] or '' }}"
-                                    required>
-
-                            </div>
 
 
                             <div class="col-md-6 mb-3">
@@ -686,8 +671,6 @@
                     '</div>';
 
 
-                // Ask browser for notification permission
-
                 const permission =
                     await Notification.requestPermission();
 
@@ -703,15 +686,11 @@
                 }
 
 
-                // Register Firebase service worker
-
                 const serviceWorkerRegistration =
                     await navigator.serviceWorker.register(
                         "/firebase-messaging-sw.js"
                     );
 
-
-                // Get FCM registration token
 
                 const token =
                     await messaging.getToken({
@@ -735,8 +714,6 @@
                     return;
                 }
 
-
-                // Temporarily store token in browser
 
                 localStorage.setItem(
                     "bloodDonorFCMToken",

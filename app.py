@@ -1,26 +1,22 @@
-from flask import Flask, render_template, request, redirect, flash, send_from_directory
-import sqlite3
-from datetime import date
+from flask import Flask, render_template, request, redirect, flash, jsonify, send_from_directory
+import sqlite3, smtplib, secrets
+from datetime import date, datetime, timedelta
 from pathlib import Path
+from email.message import EmailMessage
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-
 app.secret_key = "minor_project_secret_key_2026"
-
-# Keep the database beside app.py, even if Flask is started from another folder.
 DATABASE = Path(__file__).resolve().parent / "donors.db"
 
+# Fill these ONLY if you want real password-reset emails.
+EMAIL_SENDER = "YOUR_GMAIL@gmail.com"
+EMAIL_APP_PASSWORD = "YOUR_GMAIL_APP_PASSWORD"
 
-# --------------------------------------------------
-# FIREBASE SERVICE WORKER
-# --------------------------------------------------
-
-@app.route("/firebase-messaging-sw.js")
-def firebase_messaging_sw():
-    return send_from_directory(
-        Path(__file__).resolve().parent,
-        "firebase-messaging-sw.js"
-    )
+MIN_AGE, MAX_AGE = 18, 65
+MIN_WEIGHT = 45.0
+MIN_HEMOGLOBIN = 12.5
+MIN_DAYS_BETWEEN_DONATIONS = 90
 
 
 def get_db():
@@ -29,675 +25,265 @@ def get_db():
     return conn
 
 
-# --------------------------------------------------
-# PRELIMINARY SCREENING RULES
-# --------------------------------------------------
-
-# These are prototype/project rules. Final donation eligibility
-# must always be confirmed by authorized blood-centre staff.
-
-MIN_AGE = 18
-MIN_WEIGHT = 45.0
-MIN_HEMOGLOBIN = 12.5
-MIN_DAYS_BETWEEN_DONATIONS = 90
-MAX_SCREENING_AGE_DAYS = 15
+def calculate_age(dob):
+    d = date.fromisoformat(dob)
+    t = date.today()
+    age = t.year - d.year
+    if (t.month, t.day) < (d.month, d.day):
+        age -= 1
+    return age
 
 
-def check_eligibility(
-    age,
-    weight,
-    last_donation_date,
-    screening_date,
-    hemoglobin,
-    pallor_observed
-):
-    """Return (eligible, reason) using the project's preliminary rules."""
+def calculate_bmi(height, weight):
+    bmi = round(weight / ((height / 100) ** 2), 2)
+    if bmi < 18.5: status = "Underweight"
+    elif bmi < 25: status = "Normal"
+    elif bmi < 30: status = "Overweight"
+    else: status = "Obesity"
+    return bmi, status
 
-    if age < MIN_AGE:
-        return False, "Age is below the prototype minimum of 18 years."
 
-    if weight < MIN_WEIGHT:
-        return False, "Weight is below the prototype minimum of 45 kg."
-
-    if hemoglobin < MIN_HEMOGLOBIN:
-        return False, "Hemoglobin is below the prototype threshold of 12.5 g/dL."
-
-    if pallor_observed != "No":
-        return False, "Pallor screening did not pass the prototype rule."
-
-    try:
-        screening = date.fromisoformat(screening_date)
-    except (TypeError, ValueError):
-        return False, "A valid health screening date is required."
-
-    today = date.today()
-
-    if screening > today:
-        return False, "Health screening date cannot be in the future."
-
-    screening_age = (today - screening).days
-
-    if screening_age > MAX_SCREENING_AGE_DAYS:
-        return False, "Health screening must be within the last 15 days."
-
-    if last_donation_date:
-        try:
-            last_date = date.fromisoformat(last_donation_date)
-        except (TypeError, ValueError):
-            return False, "Last donation date is invalid."
-
-        if last_date > today:
-            return False, "Last donation date cannot be in the future."
-
-        days_since_donation = (today - last_date).days
-
-        if days_since_donation < MIN_DAYS_BETWEEN_DONATIONS:
-            return False, (
-                "At least 90 days are required since the last donation "
-                "under this prototype rule."
-            )
-
+def check_eligibility(age, weight, last_donation, hemoglobin, pallor):
+    if age < MIN_AGE: return False, "Age is below the prototype minimum of 18 years."
+    if weight < MIN_WEIGHT: return False, "Weight is below the prototype minimum of 45 kg."
+    if hemoglobin < MIN_HEMOGLOBIN: return False, "Hemoglobin is below the prototype threshold of 12.5 g/dL."
+    if pallor != "No": return False, "Pallor screening did not pass the prototype rule."
+    if last_donation:
+        try: last = date.fromisoformat(last_donation)
+        except ValueError: return False, "Last donation date is invalid."
+        if last > date.today(): return False, "Last donation date cannot be in the future."
+        if (date.today() - last).days < MIN_DAYS_BETWEEN_DONATIONS:
+            return False, "At least 90 days are required since the last donation under this prototype rule."
     return True, "Passed preliminary screening."
 
 
-# --------------------------------------------------
-# DATABASE SETUP / MIGRATION
-# --------------------------------------------------
-
-def init_db():
-    conn = get_db()
-
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS donors (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            blood_group TEXT NOT NULL,
-            gender TEXT,
-            phone TEXT NOT NULL,
-            email TEXT,
-            location TEXT NOT NULL,
-            age INTEGER NOT NULL,
-            height REAL,
-            weight REAL NOT NULL,
-            bmi REAL,
-            bmi_status TEXT,
-            last_donation_date TEXT,
-            screening_date TEXT,
-            hemoglobin REAL,
-            pallor_observed TEXT,
-            consent INTEGER DEFAULT 0,
-            is_eligible INTEGER DEFAULT 0,
-            available INTEGER DEFAULT 1
-        )
-    """)
-
-    conn.commit()
-    conn.close()
-
-
-def update_database():
-    """Add columns needed by the current version to an older donors.db."""
-
-    conn = get_db()
-
-    columns = conn.execute(
-        "PRAGMA table_info(donors)"
-    ).fetchall()
-
-    existing = {column["name"] for column in columns}
-
-    new_columns = {
-        "gender": "TEXT",
-        "height": "REAL",
-        "bmi": "REAL",
-        "bmi_status": "TEXT",
-        "screening_date": "TEXT",
-        "hemoglobin": "REAL",
-        "pallor_observed": "TEXT",
-        "consent": "INTEGER DEFAULT 0",
-    }
-
-    for name, definition in new_columns.items():
-        if name not in existing:
-            conn.execute(
-                f"ALTER TABLE donors ADD COLUMN {name} {definition}"
-            )
-
-    conn.commit()
-    conn.close()
-
-
 def setup_database():
-    init_db()
-    update_database()
+    conn = get_db()
+    conn.execute("""CREATE TABLE IF NOT EXISTS donors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL,
+        blood_group TEXT NOT NULL, gender TEXT, phone TEXT NOT NULL,
+        email TEXT, location TEXT NOT NULL, age INTEGER NOT NULL,
+        date_of_birth TEXT, password_hash TEXT, height REAL, weight REAL NOT NULL,
+        bmi REAL, bmi_status TEXT, last_donation_date TEXT,
+        screening_date TEXT, hemoglobin REAL, pallor_observed TEXT,
+        consent INTEGER DEFAULT 0, is_eligible INTEGER DEFAULT 0,
+        available INTEGER DEFAULT 1, reset_code TEXT, reset_code_expiry TEXT)""")
+    existing = {r["name"] for r in conn.execute("PRAGMA table_info(donors)").fetchall()}
+    additions = {
+        "gender":"TEXT", "date_of_birth":"TEXT", "password_hash":"TEXT",
+        "height":"REAL", "bmi":"REAL", "bmi_status":"TEXT",
+        "screening_date":"TEXT", "hemoglobin":"REAL", "pallor_observed":"TEXT",
+        "consent":"INTEGER DEFAULT 0", "available":"INTEGER DEFAULT 1",
+        "reset_code":"TEXT", "reset_code_expiry":"TEXT"
+    }
+    for name, definition in additions.items():
+        if name not in existing:
+            conn.execute(f"ALTER TABLE donors ADD COLUMN {name} {definition}")
+    conn.commit(); conn.close()
 
 
-# --------------------------------------------------
-# HOME PAGE
-# --------------------------------------------------
+def send_reset_email(recipient, code):
+    if EMAIL_SENDER == "YOUR_GMAIL@gmail.com" or EMAIL_APP_PASSWORD == "YOUR_GMAIL_APP_PASSWORD":
+        raise RuntimeError("Email settings are not configured in app.py")
+    msg = EmailMessage()
+    msg["Subject"] = "Blood Donor Management System - Password Reset"
+    msg["From"], msg["To"] = EMAIL_SENDER, recipient
+    msg.set_content(f"Your password reset code is: {code}\n\nThis code is valid for 10 minutes.")
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+        smtp.login(EMAIL_SENDER, EMAIL_APP_PASSWORD)
+        smtp.send_message(msg)
+
 
 @app.route("/")
 def home():
     conn = get_db()
-
-    donor_count = conn.execute(
-        "SELECT COUNT(*) FROM donors"
-    ).fetchone()[0]
-
-    eligible_count = conn.execute(
-        "SELECT COUNT(*) FROM donors "
-        "WHERE is_eligible = 1 AND available = 1"
-    ).fetchone()[0]
-
+    donor_count = conn.execute("SELECT COUNT(*) FROM donors").fetchone()[0]
+    eligible_count = conn.execute("SELECT COUNT(*) FROM donors WHERE is_eligible=1 AND available=1").fetchone()[0]
     conn.close()
-
-    return render_template(
-        "index.html",
-        donor_count=donor_count,
-        eligible_count=eligible_count,
-    )
+    return render_template("index.html", donor_count=donor_count, eligible_count=eligible_count)
 
 
-# --------------------------------------------------
-# DONOR REGISTRATION
-# --------------------------------------------------
+@app.route("/check-email")
+def check_email():
+    email = request.args.get("email", "").strip().lower()
+    conn = get_db()
+    row = conn.execute("SELECT id FROM donors WHERE LOWER(email)=LOWER(?) LIMIT 1", (email,)).fetchone()
+    conn.close()
+    return jsonify({"exists": row is not None})
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
+    if request.method == "GET": return render_template("register.html")
+    try:
+        name = request.form.get("name", "").strip()
+        bg = request.form.get("blood_group", "").strip()
+        gender = request.form.get("gender", "").strip()
+        phone = request.form.get("phone", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        location = request.form.get("location", "").strip()
+        dob = request.form.get("date_of_birth", "").strip()
+        if dob:
+            if date.fromisoformat(dob) > date.today():
+                flash("Date of birth cannot be in the future.", "danger"); return render_template("register.html")
+            age = calculate_age(dob)
+        else:
+            age = int(request.form.get("age", "0")); dob = None
+        height = float(request.form.get("height_cm", "0"))
+        weight = float(request.form.get("weight", "0"))
+        last = request.form.get("last_donation_date", "").strip()
+        hb = float(request.form.get("hemoglobin", "0"))
+        pallor = request.form.get("pallor_observed", "").strip()
+        consent = request.form.get("consent") == "on"
+        password = request.form.get("password", "")
+        confirm = request.form.get("confirm_password", "")
+        if not all([name,bg,gender,phone,email,location]):
+            flash("Please fill in all required donor details.", "danger"); return render_template("register.html")
+        if not consent:
+            flash("Consent is required for registration.", "danger"); return render_template("register.html")
+        if not MIN_AGE <= age <= MAX_AGE:
+            flash("Age must be between 18 and 65 for this prototype.", "danger"); return render_template("register.html")
+        if not 100 <= height <= 250 or not 20 <= weight <= 250 or not 0 < hb <= 25:
+            flash("Please enter valid height, weight and hemoglobin values.", "danger"); return render_template("register.html")
+        if len(password) < 6:
+            flash("Password must contain at least 6 characters.", "danger"); return render_template("register.html")
+        if password != confirm:
+            flash("Password and Confirm Password do not match.", "danger"); return render_template("register.html")
+        conn = get_db()
+        if conn.execute("SELECT id FROM donors WHERE LOWER(email)=LOWER(?) LIMIT 1", (email,)).fetchone():
+            conn.close(); flash("This email is already registered.", "danger"); return render_template("register.html")
+        bmi, bmi_status = calculate_bmi(height, weight)
+        eligible, reason = check_eligibility(age, weight, last, hb, pallor)
+        conn.execute("""INSERT INTO donors
+            (name,blood_group,gender,phone,email,location,age,date_of_birth,password_hash,
+             height,weight,bmi,bmi_status,last_donation_date,hemoglobin,pallor_observed,
+             consent,is_eligible,available)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (name,bg,gender,phone,email,location,age,dob,generate_password_hash(password),
+             height,weight,bmi,bmi_status,last or None,hb,pallor,int(consent),int(eligible),1))
+        conn.commit()
+        donor_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
+        donor = conn.execute("SELECT * FROM donors WHERE id=?", (donor_id,)).fetchone()
+        conn.close()
+        flash(f"Registration successful! Your Donor ID is {donor_id}.", "success")
+        return render_template("profile.html", donor=donor)
+    except (ValueError, TypeError):
+        flash("Please enter valid values in all numeric/date fields.", "danger")
+        return render_template("register.html")
+    except sqlite3.Error as e:
+        print("Database error:", e)
+        flash("A database error occurred while saving the donor.", "danger")
+        return render_template("register.html")
 
-    if request.method == "POST":
-
-        try:
-            name = request.form.get("name", "").strip()
-            blood_group = request.form.get("blood_group", "").strip()
-            gender = request.form.get("gender", "").strip()
-            phone = request.form.get("phone", "").strip()
-            email = request.form.get("email", "").strip()
-            location = request.form.get("location", "").strip()
-
-            age = int(request.form.get("age", "0"))
-
-            height_cm = float(
-                request.form.get("height_cm", "0")
-            )
-
-            weight = float(
-                request.form.get("weight", "0")
-            )
-
-            last_donation_date = request.form.get(
-                "last_donation_date",
-                ""
-            ).strip()
-
-            screening_date = request.form.get(
-                "screening_date",
-                ""
-            ).strip()
-
-            hemoglobin = float(
-                request.form.get("hemoglobin", "0")
-            )
-
-            pallor_observed = request.form.get(
-                "pallor_observed",
-                ""
-            ).strip()
-
-            consent = request.form.get("consent") == "on"
-
-            if not name or not blood_group or not gender or not phone or not location:
-                flash(
-                    "Please fill in all required donor details.",
-                    "danger"
-                )
-                return render_template("register.html")
-
-            if not consent:
-                flash(
-                    "Consent is required for registration.",
-                    "danger"
-                )
-                return render_template("register.html")
-
-            if not (18 <= age <= 65):
-                flash(
-                    "Age must be between 18 and 65 for this prototype.",
-                    "danger"
-                )
-                return render_template("register.html")
-
-            if not (100 <= height_cm <= 250):
-                flash(
-                    "Please enter a valid height between 100 and 250 cm.",
-                    "danger"
-                )
-                return render_template("register.html")
-
-            if not (20 <= weight <= 250):
-                flash(
-                    "Please enter a valid weight between 20 and 250 kg.",
-                    "danger"
-                )
-                return render_template("register.html")
-
-            if not (0 < hemoglobin <= 25):
-                flash(
-                    "Please enter a valid hemoglobin value.",
-                    "danger"
-                )
-                return render_template("register.html")
-
-            # BMI is stored for the project record but is not used
-            # as a medical diagnosis or as the sole donor decision.
-
-            height_m = height_cm / 100
-
-            bmi = round(
-                weight / (height_m ** 2),
-                2
-            )
-
-            if bmi < 18.5:
-                bmi_status = "Underweight"
-
-            elif bmi < 25:
-                bmi_status = "Normal"
-
-            elif bmi < 30:
-                bmi_status = "Overweight"
-
-            else:
-                bmi_status = "Obesity"
-
-            eligible, reason = check_eligibility(
-                age,
-                weight,
-                last_donation_date,
-                screening_date,
-                hemoglobin,
-                pallor_observed,
-            )
-
-            conn = get_db()
-
-            conn.execute("""
-                INSERT INTO donors (
-                    name,
-                    blood_group,
-                    gender,
-                    phone,
-                    email,
-                    location,
-                    age,
-                    height,
-                    weight,
-                    bmi,
-                    bmi_status,
-                    last_donation_date,
-                    screening_date,
-                    hemoglobin,
-                    pallor_observed,
-                    consent,
-                    is_eligible,
-                    available
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                name,
-                blood_group,
-                gender,
-                phone,
-                email,
-                location,
-                age,
-                height_cm,
-                weight,
-                bmi,
-                bmi_status,
-                last_donation_date or None,
-                screening_date,
-                hemoglobin,
-                pallor_observed,
-                int(consent),
-                int(eligible),
-                1
-            ))
-
-            conn.commit()
-
-            donor_id = conn.execute(
-                "SELECT last_insert_rowid()"
-            ).fetchone()[0]
-
-            conn.close()
-
-            flash(
-                f"Registration successful! Your Donor ID is {donor_id}. "
-                "Please save this ID.",
-                "success"
-            )
-
-            return redirect("/search")
-
-        except (ValueError, TypeError):
-
-            flash(
-                "Please enter valid values in all numeric/date fields.",
-                "danger"
-            )
-
-            return render_template("register.html")
-
-        except sqlite3.Error:
-
-            flash(
-                "A database error occurred while saving the donor. "
-                "Please try again.",
-                "danger"
-            )
-
-            return render_template("register.html")
-
-    return render_template("register.html")
-
-
-# --------------------------------------------------
-# DONOR PROFILE LOGIN
-# --------------------------------------------------
 
 @app.route("/profile", methods=["GET", "POST"])
 def profile():
-
-    if request.method == "POST":
-
-        donor_id = request.form["donor_id"]
-        phone = request.form["phone"]
-
-        conn = get_db()
-
-        donor = conn.execute(
-            "SELECT * FROM donors WHERE id = ? AND phone = ?",
-            (donor_id, phone)
-        ).fetchone()
-
+    if request.method == "GET": return render_template("profile_login.html")
+    conn = get_db()
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "")
+    if email and password:
+        donor = conn.execute("SELECT * FROM donors WHERE LOWER(email)=LOWER(?) LIMIT 1", (email,)).fetchone()
         conn.close()
-
-        if not donor:
-
-            flash(
-                "Invalid Donor ID or Phone Number.",
-                "danger"
-            )
-
-            return redirect("/profile")
-
-        return render_template(
-            "profile.html",
-            donor=donor
-        )
-
-    return render_template("profile_login.html")
+        if not donor or not donor["password_hash"] or not check_password_hash(donor["password_hash"], password):
+            flash("Invalid email or password.", "danger"); return redirect("/profile")
+        return render_template("profile.html", donor=donor)
+    donor_id = request.form.get("donor_id", "").strip(); phone = request.form.get("phone", "").strip()
+    if donor_id and phone:
+        try: donor_id = int(donor_id)
+        except ValueError: conn.close(); flash("Invalid Donor ID.", "danger"); return redirect("/profile")
+        donor = conn.execute("SELECT * FROM donors WHERE id=? AND phone=?", (donor_id,phone)).fetchone()
+        conn.close()
+        if not donor: flash("Invalid Donor ID or Phone Number.", "danger"); return redirect("/profile")
+        return render_template("profile.html", donor=donor)
+    conn.close(); flash("Please enter your login details.", "danger"); return redirect("/profile")
 
 
-# --------------------------------------------------
-# UPDATE DONOR PROFILE
-# --------------------------------------------------
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if request.method == "GET":
+        try: return render_template("forgot_password.html")
+        except Exception:
+            return '<h2>Forgot Password</h2><form method="POST"><input type="email" name="email" required><button>Send Reset Code</button></form>'
+    email = request.form.get("email", "").strip().lower()
+    conn = get_db(); donor = conn.execute("SELECT id FROM donors WHERE LOWER(email)=LOWER(?) LIMIT 1", (email,)).fetchone()
+    if not donor:
+        conn.close(); flash("No donor account was found with this email.", "danger"); return redirect("/forgot-password")
+    code = str(secrets.randbelow(900000)+100000); expiry = datetime.now()+timedelta(minutes=10)
+    conn.execute("UPDATE donors SET reset_code=?,reset_code_expiry=? WHERE id=?", (code,expiry.isoformat(),donor["id"])); conn.commit(); conn.close()
+    try: send_reset_email(email, code)
+    except Exception as e:
+        print("Email error:", e)
+        conn=get_db(); conn.execute("UPDATE donors SET reset_code=NULL,reset_code_expiry=NULL WHERE id=?",(donor["id"],)); conn.commit(); conn.close()
+        flash("Password reset email could not be sent. Check the email settings in app.py.", "danger"); return redirect("/forgot-password")
+    flash("A password reset code has been sent to your email.", "success")
+    return redirect("/reset-password")
+
+
+@app.route("/reset-password", methods=["GET", "POST"])
+def reset_password():
+    if request.method == "GET":
+        try: return render_template("reset_password.html")
+        except Exception:
+            return '<h2>Reset Password</h2><form method="POST"><input type="email" name="email" required><input name="reset_code" required><input type="password" name="new_password" required><input type="password" name="confirm_password" required><button>Reset Password</button></form>'
+    email=request.form.get("email","").strip().lower(); code=request.form.get("reset_code","").strip()
+    new=request.form.get("new_password",request.form.get("password","")); confirm=request.form.get("confirm_password","")
+    if len(new)<6: flash("New password must contain at least 6 characters.","danger"); return redirect("/reset-password")
+    if new!=confirm: flash("New password and Confirm Password do not match.","danger"); return redirect("/reset-password")
+    conn=get_db(); donor=conn.execute("SELECT * FROM donors WHERE LOWER(email)=LOWER(?) LIMIT 1",(email,)).fetchone()
+    if not donor or not donor["reset_code"] or donor["reset_code"]!=code:
+        conn.close(); flash("Invalid email or reset code.","danger"); return redirect("/reset-password")
+    try: expired=datetime.now()>datetime.fromisoformat(donor["reset_code_expiry"])
+    except (TypeError,ValueError): expired=True
+    if expired:
+        conn.close(); flash("The password reset code has expired.","danger"); return redirect("/reset-password")
+    conn.execute("UPDATE donors SET password_hash=?,reset_code=NULL,reset_code_expiry=NULL WHERE id=?",(generate_password_hash(new),donor["id"])); conn.commit(); conn.close()
+    flash("Password reset successfully. You can now log in.","success"); return redirect("/profile")
+
 
 @app.route("/profile/update/<int:donor_id>", methods=["POST"])
 def update_profile(donor_id):
-
     try:
-
-        name = request.form["name"]
-        blood_group = request.form["blood_group"]
-        gender = request.form["gender"]
-        phone = request.form["phone"]
-        email = request.form["email"]
-        location = request.form["location"]
-
-        age = int(request.form["age"])
-
-        height_cm = float(
-            request.form["height_cm"]
-        )
-
-        weight = float(
-            request.form["weight"]
-        )
-
-        last_donation_date = request.form.get(
-            "last_donation_date",
-            ""
-        )
-
-        screening_date = request.form["screening_date"]
-
-        hemoglobin = float(
-            request.form["hemoglobin"]
-        )
-
-        pallor_observed = request.form[
-            "pallor_observed"
-        ]
-
-        consent = request.form.get(
-            "consent"
-        ) == "on"
-
-        # Calculate BMI
-
-        height_m = height_cm / 100
-
-        bmi = round(
-            weight / (height_m ** 2),
-            2
-        )
-
-        if bmi < 18.5:
-            bmi_status = "Underweight"
-
-        elif bmi < 25:
-            bmi_status = "Normal"
-
-        elif bmi < 30:
-            bmi_status = "Overweight"
-
+        name=request.form.get("name","").strip(); bg=request.form.get("blood_group","").strip(); gender=request.form.get("gender","").strip(); phone=request.form.get("phone","").strip(); email=request.form.get("email","").strip().lower(); location=request.form.get("location","").strip()
+        dob=request.form.get("date_of_birth","").strip()
+        if dob:
+            if date.fromisoformat(dob)>date.today(): raise ValueError
+            age=calculate_age(dob)
         else:
-            bmi_status = "Obesity"
-
-        # Check preliminary eligibility again
-
-        eligible, reason = check_eligibility(
-            age,
-            weight,
-            last_donation_date,
-            screening_date,
-            hemoglobin,
-            pallor_observed
-        )
-
-        conn = get_db()
-
-        conn.execute("""
-            UPDATE donors
-            SET
-                name = ?,
-                blood_group = ?,
-                gender = ?,
-                phone = ?,
-                email = ?,
-                location = ?,
-                age = ?,
-                height = ?,
-                weight = ?,
-                bmi = ?,
-                bmi_status = ?,
-                last_donation_date = ?,
-                screening_date = ?,
-                hemoglobin = ?,
-                pallor_observed = ?,
-                consent = ?,
-                is_eligible = ?
-            WHERE id = ?
-        """, (
-            name,
-            blood_group,
-            gender,
-            phone,
-            email,
-            location,
-            age,
-            height_cm,
-            weight,
-            bmi,
-            bmi_status,
-            last_donation_date or None,
-            screening_date,
-            hemoglobin,
-            pallor_observed,
-            int(consent),
-            int(eligible),
-            donor_id
-        ))
-
-        conn.commit()
-
-        donor = conn.execute(
-            "SELECT * FROM donors WHERE id = ?",
-            (donor_id,)
-        ).fetchone()
-
-        conn.close()
-
-        flash(
-            f"Profile updated successfully! {reason}",
-            "success" if eligible else "warning"
-        )
-
-        return render_template(
-            "profile.html",
-            donor=donor
-        )
-
-    except (ValueError, TypeError):
-
-        flash(
-            "Please enter valid values in all numeric/date fields.",
-            "danger"
-        )
-
-        return redirect("/profile")
-
-    except sqlite3.Error:
-
-        flash(
-            "A database error occurred while updating the profile.",
-            "danger"
-        )
-
-        return redirect("/profile")
+            age=int(request.form.get("age","0")); dob=None
+        height=float(request.form.get("height_cm","0")); weight=float(request.form.get("weight","0")); last=request.form.get("last_donation_date","").strip(); hb=float(request.form.get("hemoglobin","0")); pallor=request.form.get("pallor_observed","").strip(); consent=request.form.get("consent")=="on"
+        if not MIN_AGE<=age<=MAX_AGE or not 100<=height<=250 or not 20<=weight<=250 or not 0<hb<=25: raise ValueError
+        bmi,status=calculate_bmi(height,weight); eligible,reason=check_eligibility(age,weight,last,hb,pallor)
+        conn=get_db()
+        if conn.execute("SELECT id FROM donors WHERE LOWER(email)=LOWER(?) AND id!=? LIMIT 1",(email,donor_id)).fetchone():
+            conn.close(); flash("This email is already registered to another donor.","danger"); return redirect("/profile")
+        conn.execute("""UPDATE donors SET name=?,blood_group=?,gender=?,phone=?,email=?,location=?,age=?,date_of_birth=?,height=?,weight=?,bmi=?,bmi_status=?,last_donation_date=?,hemoglobin=?,pallor_observed=?,consent=?,is_eligible=? WHERE id=?""",(name,bg,gender,phone,email,location,age,dob,height,weight,bmi,status,last or None,hb,pallor,int(consent),int(eligible),donor_id)); conn.commit(); donor=conn.execute("SELECT * FROM donors WHERE id=?",(donor_id,)).fetchone(); conn.close()
+        flash(f"Profile updated successfully! {reason}","success" if eligible else "warning"); return render_template("profile.html",donor=donor)
+    except (ValueError,TypeError):
+        flash("Please enter valid profile values.","danger"); return redirect("/profile")
 
 
-# --------------------------------------------------
-# UPDATE AVAILABILITY
-# --------------------------------------------------
-
-@app.route(
-    "/profile/availability/<int:donor_id>",
-    methods=["POST"]
-)
+@app.route("/profile/availability/<int:donor_id>", methods=["POST"])
 def update_availability(donor_id):
+    available=1 if request.form.get("available")=="1" else 0
+    conn=get_db(); conn.execute("UPDATE donors SET available=? WHERE id=?",(available,donor_id)); conn.commit(); conn.close()
+    flash("Availability status updated.","success"); return redirect("/profile")
 
-    available = request.form.get("available")
-
-    if available == "1":
-        new_status = 1
-    else:
-        new_status = 0
-
-    conn = get_db()
-
-    conn.execute(
-        "UPDATE donors SET available = ? WHERE id = ?",
-        (new_status, donor_id)
-    )
-
-    conn.commit()
-    conn.close()
-
-    flash(
-        "Availability status updated.",
-        "success"
-    )
-
-    return redirect("/profile")
-
-
-# --------------------------------------------------
-# SEARCH DONORS
-# --------------------------------------------------
 
 @app.route("/search")
 def search():
-
-    blood_group = request.args.get(
-        "blood_group",
-        ""
-    ).strip()
-
-    location = request.args.get(
-        "location",
-        ""
-    ).strip()
-
-    conn = get_db()
-
-    query = """
-        SELECT id, name, blood_group, location
-        FROM donors
-        WHERE is_eligible = 1
-          AND available = 1
-    """
-
-    parameters = []
-
-    if blood_group:
-
-        query += " AND blood_group = ?"
-
-        parameters.append(
-            blood_group
-        )
-
-    if location:
-
-        query += " AND location LIKE ? COLLATE NOCASE"
-
-        parameters.append(
-            "%" + location + "%"
-        )
-
-    query += " ORDER BY name COLLATE NOCASE"
-
-    donors = conn.execute(
-        query,
-        parameters
-    ).fetchall()
-
-    conn.close()
-
-    return render_template(
-        "search.html",
-        donors=donors,
-        selected_blood_group=blood_group,
-        selected_location=location,
-    )
+    bg=request.args.get("blood_group","").strip(); location=request.args.get("location","").strip()
+    conn=get_db(); query="SELECT id,name,blood_group,location FROM donors WHERE is_eligible=1 AND available=1"; params=[]
+    if bg: query+=" AND blood_group=?"; params.append(bg)
+    if location: query+=" AND location LIKE ? COLLATE NOCASE"; params.append("%"+location+"%")
+    query+=" ORDER BY name COLLATE NOCASE"; donors=conn.execute(query,params).fetchall(); conn.close()
+    return render_template("search.html",donors=donors,selected_blood_group=bg,selected_location=location)
 
 
-# --------------------------------------------------
-# START APPLICATION
-# --------------------------------------------------
+@app.route("/firebase-messaging-sw.js")
+def firebase_messaging_sw():
+    return send_from_directory(app.root_path,"firebase-messaging-sw.js",mimetype="application/javascript")
+
 
 setup_database()
 
