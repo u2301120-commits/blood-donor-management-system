@@ -1,0 +1,999 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Donor Registration | Blood Donor Management System</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #a51d32;
+            --primary-dark: #821628;
+            --primary-light: #fff0f2;
+            --text-dark: #292d32;
+            --text-muted: #6c757d;
+            --page-bg: #f7f7fa;
+            --border: #e8e8ed;
+        }
+
+        body {
+            background-color: var(--page-bg);
+            color: var(--text-dark);
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background-color: var(--primary);
+            padding: 15px 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .navbar-brand {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff !important;
+        }
+
+        .brand-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            margin-right: 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.16);
+            font-size: 21px;
+        }
+
+        .page-container {
+            max-width: 950px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--primary);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            color: var(--primary-dark);
+            text-decoration: underline;
+        }
+
+        .page-heading {
+            margin-bottom: 28px;
+        }
+
+        .page-heading h1 {
+            color: var(--primary);
+            font-size: 30px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .page-heading p {
+            color: var(--text-muted);
+            font-size: 15px;
+            margin-bottom: 0;
+        }
+
+        .heading-tag {
+            display: inline-block;
+            padding: 5px 13px;
+            margin-bottom: 12px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .form-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.035);
+        }
+
+        .form-card-header {
+            padding: 22px 30px;
+            background: #fff;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-card-header h2 {
+            font-size: 19px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .form-card-header p {
+            color: var(--text-muted);
+            font-size: 13px;
+            margin-bottom: 0;
+        }
+
+        .form-card-body {
+            padding: 30px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-section:last-of-type {
+            margin-bottom: 25px;
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 35px;
+            height: 35px;
+            border-radius: 10px;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .section-heading h3 {
+            font-size: 17px;
+            font-weight: 700;
+            margin-bottom: 0;
+        }
+
+        .section-heading p {
+            color: var(--text-muted);
+            font-size: 12px;
+            margin: 3px 0 0;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 7px;
+            color: #34383e;
+        }
+
+        .required-star {
+            color: #dc3545;
+            font-weight: 700;
+        }
+
+        .form-control,
+        .form-select {
+            min-height: 45px;
+            border: 1px solid #dfe1e6;
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--text-dark);
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(165, 29, 50, 0.10);
+        }
+
+        .form-control::placeholder {
+            color: #a0a4ab;
+        }
+
+        .form-text {
+            display: block;
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .form-check-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(165, 29, 50, 0.10);
+        }
+
+        .form-check-label {
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .alert {
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .medical-alert {
+            background-color: #fff9e9;
+            border: 1px solid #f0dfad;
+            border-left: 5px solid #e3ae35;
+            border-radius: 10px;
+            padding: 17px 20px;
+            color: #6c5725;
+            font-size: 13px;
+        }
+
+        .btn-register {
+            background-color: var(--primary);
+            color: #fff;
+            border: 1px solid var(--primary);
+            border-radius: 9px;
+            padding: 12px 30px;
+            font-size: 15px;
+            font-weight: 700;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-register:hover,
+        .btn-register:focus {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+            color: #fff;
+        }
+
+        .btn-register:disabled {
+            background-color: #b98a91;
+            border-color: #b98a91;
+            cursor: not-allowed;
+        }
+
+        .submit-note {
+            color: var(--text-muted);
+            font-size: 12px;
+            margin-top: 12px;
+        }
+
+        footer {
+            margin-top: 45px;
+            padding: 22px 15px;
+            background-color: #25282d;
+            color: #d7d7d7;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        footer p {
+            margin: 0;
+        }
+
+        @media (max-width: 576px) {
+            .navbar-brand {
+                font-size: 15px;
+            }
+
+            .page-heading h1 {
+                font-size: 25px;
+            }
+
+            .form-card-header {
+                padding: 20px;
+            }
+
+            .form-card-body {
+                padding: 20px 17px;
+            }
+
+            .section-heading h3 {
+                font-size: 16px;
+            }
+
+            .btn-register {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                transition: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- Navigation -->
+<nav class="navbar navbar-dark">
+    <div class="container">
+        <a class="navbar-brand d-flex align-items-center" href="/">
+            <span class="brand-icon" aria-hidden="true">♥</span>
+            Blood Donor Management System
+        </a>
+    </div>
+</nav>
+
+<main class="container page-container py-4 py-md-5">
+
+    <!-- Back to Home -->
+    <div class="mb-4">
+        <a href="/" class="back-link">
+            <span aria-hidden="true">←</span>
+            Back to Home
+        </a>
+    </div>
+
+    <!-- Page Heading -->
+    <div class="page-heading text-center">
+        <span class="heading-tag">DONOR REGISTRATION</span>
+        <h1>Become a Blood Donor</h1>
+        <p>
+            Fill in your details to create your donor account and complete
+            the preliminary screening process.
+        </p>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show"
+                 role="alert">
+                {{ message }}
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="alert"
+                        aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <!-- Registration Form -->
+    <div class="form-card">
+
+        <div class="form-card-header">
+            <h2>Registration Form</h2>
+            <p>
+                Fields marked with
+                <span class="required-star">*</span>
+                are mandatory.
+            </p>
+        </div>
+
+        <div class="form-card-body">
+
+            <form method="POST" id="registrationForm">
+
+                <!-- 01. BASIC DETAILS -->
+                <section class="form-section">
+
+                    <div class="section-heading">
+                        <span class="section-number">01</span>
+                        <div>
+                            <h3>Basic Details</h3>
+                            <p>Enter your personal information.</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">
+                            Full Name <span class="required-star">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            name="name"
+                            id="name"
+                            class="form-control"
+                            maxlength="100"
+                            autocomplete="name"
+                            placeholder="Enter your full name"
+                            required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="blood_group" class="form-label">
+                                Blood Group <span class="required-star">*</span>
+                            </label>
+
+                            <select name="blood_group"
+                                    id="blood_group"
+                                    class="form-select"
+                                    required>
+                                <option value="">Select blood group</option>
+                                {% for bg in [
+                                    "A+","A-",
+                                    "B+","B-",
+                                    "AB+","AB-",
+                                    "O+","O-"
+                                ] %}
+                                    <option value="{{ bg }}">{{ bg }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="gender" class="form-label">
+                                Gender <span class="required-star">*</span>
+                            </label>
+
+                            <select name="gender"
+                                    id="gender"
+                                    class="form-select"
+                                    required>
+                                <option value="">Select gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="date_of_birth" class="form-label">
+                            Date of Birth <span class="required-star">*</span>
+                        </label>
+
+                        <input
+                            type="date"
+                            name="date_of_birth"
+                            id="date_of_birth"
+                            class="form-control"
+                            required>
+                    </div>
+
+                </section>
+
+                <!-- 02. CONTACT DETAILS -->
+                <section class="form-section">
+
+                    <div class="section-heading">
+                        <span class="section-number">02</span>
+                        <div>
+                            <h3>Contact Details</h3>
+                            <p>Provide your contact information and location.</p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">
+                                Phone Number <span class="required-star">*</span>
+                            </label>
+
+                            <input
+                                type="tel"
+                                name="phone"
+                                id="phone"
+                                class="form-control"
+                                maxlength="20"
+                                autocomplete="tel"
+                                placeholder="Enter your phone number"
+                                required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">
+                                Email Address <span class="required-star">*</span>
+                            </label>
+
+                            <input
+                                type="email"
+                                name="email"
+                                id="email"
+                                class="form-control"
+                                maxlength="150"
+                                autocomplete="email"
+                                placeholder="Enter your email address"
+                                aria-describedby="emailMessage"
+                                required>
+
+                            <div id="emailMessage"
+                                 class="form-text"
+                                 role="status"
+                                 aria-live="polite"
+                                 style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="location" class="form-label">
+                            Location <span class="required-star">*</span>
+                        </label>
+
+                        <input
+                            type="text"
+                            name="location"
+                            id="location"
+                            class="form-control"
+                            maxlength="100"
+                            autocomplete="address-level2"
+                            placeholder="Example: Kakkanad"
+                            required>
+                    </div>
+
+                </section>
+
+                <!-- 03. ACCOUNT SECURITY -->
+                <section class="form-section">
+
+                    <div class="section-heading">
+                        <span class="section-number">03</span>
+                        <div>
+                            <h3>Account Security</h3>
+                            <p>Create a password for your donor account.</p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="password" class="form-label">
+                                Password <span class="required-star">*</span>
+                            </label>
+
+                            <input
+                                type="password"
+                                name="password"
+                                id="password"
+                                class="form-control"
+                                minlength="6"
+                                autocomplete="new-password"
+                                placeholder="Create a password"
+                                required>
+
+                            <small class="form-text">
+                                Minimum 6 characters.
+                            </small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="confirm_password" class="form-label">
+                                Confirm Password <span class="required-star">*</span>
+                            </label>
+
+                            <input
+                                type="password"
+                                name="confirm_password"
+                                id="confirm_password"
+                                class="form-control"
+                                minlength="6"
+                                autocomplete="new-password"
+                                placeholder="Re-enter your password"
+                                required>
+
+                            <small id="passwordMessage"
+                                   class="form-text"
+                                   aria-live="polite"></small>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- 04. DONATION HISTORY -->
+                <section class="form-section">
+
+                    <div class="section-heading">
+                        <span class="section-number">04</span>
+                        <div>
+                            <h3>Donation History</h3>
+                            <p>Provide details about your previous donation.</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="last_donation_date" class="form-label">
+                            Last Whole-Blood Donation Date
+                            <span class="text-muted fw-normal">(Optional)</span>
+                        </label>
+
+                        <input
+                            type="date"
+                            name="last_donation_date"
+                            id="last_donation_date"
+                            class="form-control">
+
+                        <small class="form-text">
+                            Leave blank if this is your first donation.
+                        </small>
+                    </div>
+
+                </section>
+
+                <!-- 05. HEALTH SCREENING -->
+                <section class="form-section">
+
+                    <div class="section-heading">
+                        <span class="section-number">05</span>
+                        <div>
+                            <h3>Recent Health Screening</h3>
+                            <p>Enter your most recent screening information.</p>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        Enter your most recent health screening information
+                        for preliminary eligibility checking.
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="height_cm" class="form-label">
+                                Height (cm) <span class="required-star">*</span>
+                            </label>
+
+                            <input
+                                type="number"
+                                name="height_cm"
+                                id="height_cm"
+                                class="form-control"
+                                min="100"
+                                max="250"
+                                step="0.1"
+                                placeholder="e.g. 165"
+                                required>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="weight" class="form-label">
+                                Weight (kg) <span class="required-star">*</span>
+                            </label>
+
+                            <input
+                                type="number"
+                                name="weight"
+                                id="weight"
+                                class="form-control"
+                                min="20"
+                                max="250"
+                                step="0.1"
+                                placeholder="e.g. 55"
+                                required>
+
+                            <small class="form-text">
+                                Minimum screening threshold: 45 kg.
+                            </small>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label for="hemoglobin" class="form-label">
+                                Hemoglobin (g/dL)
+                                <span class="required-star">*</span>
+                            </label>
+
+                            <input
+                                type="number"
+                                name="hemoglobin"
+                                id="hemoglobin"
+                                class="form-control"
+                                min="0"
+                                max="25"
+                                step="0.1"
+                                placeholder="e.g. 13.5"
+                                required>
+
+                            <small class="form-text">
+                                Minimum screening threshold: 12.5 g/dL.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="pallor_observed" class="form-label">
+                            Visible pallor / signs requiring anemia assessment?
+                            <span class="required-star">*</span>
+                        </label>
+
+                        <select
+                            name="pallor_observed"
+                            id="pallor_observed"
+                            class="form-select"
+                            required>
+                            <option value="">Select an option</option>
+                            <option value="No">No</option>
+                            <option value="Yes">Yes</option>
+                            <option value="Not assessed">Not assessed</option>
+                        </select>
+
+                        <small class="form-text">
+                            Pallor is a screening observation, not a diagnosis.
+                        </small>
+                    </div>
+
+                </section>
+
+                <!-- 06. CONSENT AND CONFIRMATION -->
+                <section class="form-section">
+
+                    <div class="section-heading">
+                        <span class="section-number">06</span>
+                        <div>
+                            <h3>Consent and Confirmation</h3>
+                            <p>Review the information and provide consent.</p>
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        <input
+                            class="form-check-input"
+                            type="checkbox"
+                            name="consent"
+                            id="consent"
+                            required>
+
+                        <label class="form-check-label" for="consent">
+                            I consent to the storage and use of the
+                            information I provide for donor registration
+                            and preliminary screening.
+                            <span class="required-star">*</span>
+                        </label>
+                    </div>
+
+                </section>
+
+                <!-- MEDICAL DISCLAIMER -->
+                <div class="medical-alert mb-4" role="note">
+                    <strong>Important:</strong>
+                    This system performs only preliminary screening for an
+                    academic project. Final blood-donation eligibility must
+                    be determined by authorized blood-centre medical staff.
+                </div>
+
+                <!-- SUBMIT -->
+                <div class="text-center pt-2">
+
+                    <button
+                        type="submit"
+                        id="registerButton"
+                        class="btn btn-register">
+                        Register Donor
+                    </button>
+
+                    <p class="submit-note">
+                        Please check your details before submitting.
+                    </p>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</main>
+
+<!-- Footer -->
+<footer>
+    <p>Blood Donor Management System | Academic Project</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Form Validation and Email Availability Check -->
+<script>
+    const emailInput = document.getElementById("email");
+    const emailMessage = document.getElementById("emailMessage");
+    const registrationForm = document.getElementById("registrationForm");
+    const registerButton = document.getElementById("registerButton");
+
+    const passwordInput = document.getElementById("password");
+    const confirmPasswordInput = document.getElementById("confirm_password");
+    const passwordMessage = document.getElementById("passwordMessage");
+
+    const dobInput = document.getElementById("date_of_birth");
+    const donationDateInput = document.getElementById("last_donation_date");
+
+    let emailTimer = null;
+    let emailExists = false;
+    let emailCheckPending = false;
+    let emailRequestId = 0;
+
+    // Set today's date as the maximum allowed date.
+    const today = new Date();
+    const todayString = [
+        today.getFullYear(),
+        String(today.getMonth() + 1).padStart(2, "0"),
+        String(today.getDate()).padStart(2, "0")
+    ].join("-");
+
+    dobInput.max = todayString;
+    donationDateInput.max = todayString;
+
+    // Password confirmation validation.
+    function validatePasswords() {
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+
+        if (!confirmPassword) {
+            confirmPasswordInput.setCustomValidity("");
+            passwordMessage.textContent = "";
+            passwordMessage.className = "form-text";
+            return true;
+        }
+
+        if (password !== confirmPassword) {
+            confirmPasswordInput.setCustomValidity("Passwords do not match.");
+            passwordMessage.textContent = "Passwords do not match.";
+            passwordMessage.className = "form-text text-danger";
+            return false;
+        }
+
+        confirmPasswordInput.setCustomValidity("");
+        passwordMessage.textContent = "Passwords match.";
+        passwordMessage.className = "form-text text-success";
+        return true;
+    }
+
+    passwordInput.addEventListener("input", validatePasswords);
+    confirmPasswordInput.addEventListener("input", validatePasswords);
+
+    // Prevent future dates in date fields.
+    function validateDates() {
+        if (dobInput.value && dobInput.value > todayString) {
+            dobInput.setCustomValidity("Date of birth cannot be in the future.");
+        } else {
+            dobInput.setCustomValidity("");
+        }
+
+        if (donationDateInput.value && donationDateInput.value > todayString) {
+            donationDateInput.setCustomValidity(
+                "Last donation date cannot be in the future."
+            );
+        } else {
+            donationDateInput.setCustomValidity("");
+        }
+    }
+
+    dobInput.addEventListener("change", validateDates);
+    donationDateInput.addEventListener("change", validateDates);
+
+    // Email message helper.
+    function showEmailMessage(message, type) {
+        emailMessage.textContent = message;
+        emailMessage.className = "form-text " + type;
+        emailMessage.style.display = "block";
+    }
+
+    function clearEmailMessage() {
+        emailMessage.textContent = "";
+        emailMessage.style.display = "none";
+        emailMessage.className = "form-text";
+    }
+
+    function resetEmailStatus() {
+        emailInput.classList.remove("is-valid", "is-invalid");
+        emailExists = false;
+        emailCheckPending = false;
+        registerButton.disabled = false;
+    }
+
+    // Live email availability check.
+    emailInput.addEventListener("input", function () {
+        const email = emailInput.value.trim();
+
+        clearTimeout(emailTimer);
+
+        // Invalidate any older request.
+        emailRequestId++;
+        const currentRequestId = emailRequestId;
+
+        resetEmailStatus();
+        clearEmailMessage();
+
+        if (email.length < 5 || !emailInput.checkValidity()) {
+            return;
+        }
+
+        emailCheckPending = true;
+        registerButton.disabled = true;
+
+        emailTimer = setTimeout(function () {
+            fetch("/check-email?email=" + encodeURIComponent(email))
+                .then(function (response) {
+                    if (!response.ok) {
+                        throw new Error("Email check failed.");
+                    }
+                    return response.json();
+                })
+                .then(function (data) {
+                    // Ignore stale responses.
+                    if (
+                        currentRequestId !== emailRequestId ||
+                        emailInput.value.trim() !== email
+                    ) {
+                        return;
+                    }
+
+                    emailCheckPending = false;
+
+                    if (data.exists) {
+                        emailExists = true;
+                        emailInput.classList.add("is-invalid");
+
+                        showEmailMessage(
+                            "This email is already registered.",
+                            "text-danger fw-semibold"
+                        );
+
+                        registerButton.disabled = true;
+                    } else {
+                        emailExists = false;
+                        emailInput.classList.add("is-valid");
+
+                        showEmailMessage(
+                            "Email is available.",
+                            "text-success"
+                        );
+
+                        registerButton.disabled = false;
+                    }
+                })
+                .catch(function () {
+                    if (currentRequestId !== emailRequestId) {
+                        return;
+                    }
+
+                    emailCheckPending = false;
+                    emailExists = false;
+                    registerButton.disabled = false;
+
+                    showEmailMessage(
+                        "Unable to check email availability. The server will verify it during registration.",
+                        "text-muted"
+                    );
+                });
+        }, 500);
+    });
+
+    // Prevent submission if validation fails or email is already registered.
+    registrationForm.addEventListener("submit", function (event) {
+        validateDates();
+
+        const passwordsMatch = validatePasswords();
+
+        if (!passwordsMatch) {
+            event.preventDefault();
+            confirmPasswordInput.focus();
+            return;
+        }
+
+        if (emailExists || emailCheckPending) {
+            event.preventDefault();
+            emailInput.focus();
+
+            if (emailExists) {
+                showEmailMessage(
+                    "This email is already registered.",
+                    "text-danger fw-semibold"
+                );
+            } else {
+                showEmailMessage(
+                    "Please wait while the email availability check completes.",
+                    "text-muted"
+                );
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

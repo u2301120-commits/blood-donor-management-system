@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Donor Profile</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-dark bg-danger">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="/">
+                Blood Donor Management System
+            </a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+
+        <!-- BACK TO HOME BUTTON -->
+        <div class="mb-4">
+            <a href="/" class="btn btn-outline-danger">
+                ← Back to Home
+            </a>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+
+                <!-- FLASH MESSAGES -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endwith %}
+
+                <!-- PROFILE TITLE -->
+                <h2 class="text-center mb-4">Donor Profile</h2>
+
+                <!-- NOTIFICATION CARD -->
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Emergency Notifications</h5>
+
+                        <p class="text-muted">
+                            Enable notifications to receive emergency blood donation
+                            requests matching your donor details.
+                        </p>
+
+                        <button
+                            type="button"
+                            id="enableNotifications"
+                            class="btn btn-danger">
+                            Enable Notifications
+                        </button>
+
+                        <div id="notificationStatus" class="mt-3"></div>
+                    </div>
+                </div>
+
+                <!-- AVAILABILITY -->
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Availability Status</h5>
+
+                        <p>
+                            Current status:
+
+                            {% if donor['available'] == 1 %}
+                                <span class="badge bg-success">Available</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Unavailable</span>
+                            {% endif %}
+                        </p>
+
+                        <form
+                            method="POST"
+                            action="/profile/availability/{{ donor['id'] }}">
+
+                            {% if donor['available'] == 1 %}
+                                <input type="hidden" name="available" value="0">
+
+                                <button type="submit" class="btn btn-outline-secondary">
+                                    Mark as Unavailable
+                                </button>
+                            {% else %}
+                                <input type="hidden" name="available" value="1">
+
+                                <button type="submit" class="btn btn-success">
+                                    Mark as Available
+                                </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+
+                <!-- PRELIMINARY ELIGIBILITY -->
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Preliminary Eligibility</h5>
+
+                        {% if donor['is_eligible'] == 1 %}
+                            <div class="alert alert-success">
+                                Passed preliminary screening.
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning">
+                                Does not currently pass the project's preliminary screening rules.
+                            </div>
+                        {% endif %}
+
+                        <p class="text-muted mb-0">
+                            Final donation eligibility must be confirmed by authorized
+                            blood-centre staff.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- BMI ASSESSMENT -->
+                <div class="card shadow mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">BMI Assessment</h5>
+
+                        {% if donor['bmi'] is not none %}
+                            <h3>{{ "%.2f"|format(donor['bmi']) }}</h3>
+
+                            <p class="mb-0">
+                                Category:
+                                <span class="badge bg-info">
+                                    {{ donor['bmi_status'] }}
+                                </span>
+                            </p>
+                        {% else %}
+                            <p class="text-muted mb-0">
+                                BMI has not been calculated yet.
+                                Update your height and weight to calculate it.
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- EDIT PROFILE -->
+                <div class="card shadow mb-5">
+                    <div class="card-body">
+                        <h5 class="card-title mb-4">Edit Profile</h5>
+
+                        <form
+                            method="POST"
+                            action="/profile/update/{{ donor['id'] }}">
+
+                            <!-- BASIC DETAILS -->
+                            <h6 class="border-bottom pb-2">Basic Details</h6>
+
+                            <div class="row">
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Name</label>
+
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        class="form-control"
+                                        value="{{ donor['name'] }}"
+                                        required>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Blood Group</label>
+
+                                    <select
+                                        name="blood_group"
+                                        class="form-select"
+                                        required>
+
+                                        {% for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] %}
+                                            <option
+                                                value="{{ bg }}"
+                                                {% if donor['blood_group'] == bg %}selected{% endif %}>
+                                                {{ bg }}
+                                            </option>
+                                        {% endfor %}
+
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Gender</label>
+
+                                    <select
+                                        name="gender"
+                                        class="form-select"
+                                        required>
+
+                                        {% for gender in ['Female', 'Male', 'Other'] %}
+                                            <option
+                                                value="{{ gender }}"
+                                                {% if donor['gender'] == gender %}selected{% endif %}>
+                                                {{ gender }}
+                                            </option>
+                                        {% endfor %}
+
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Age</label>
+
+                                    <input
+                                        type="number"
+                                        name="age"
+                                        class="form-control"
+                                        value="{{ donor['age'] }}"
+                                        min="18"
+                                        max="65"
+                                        required>
+                                </div>
+
+                            </div>
+
+                            <!-- BODY DETAILS -->
+                            <h6 class="border-bottom pb-2 mt-4">Body Details</h6>
+
+                            <div class="row">
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Height (cm)</label>
+
+                                    <input
+                                        type="number"
+                                        name="height_cm"
+                                        class="form-control"
+                                        value="{{ donor['height'] or '' }}"
+                                        min="100"
+                                        max="250"
+                                        step="0.1"
+                                        required>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Weight (kg)</label>
+
+                                    <input
+                                        type="number"
+                                        name="weight"
+                                        class="form-control"
+                                        value="{{ donor['weight'] }}"
+                                        min="20"
+                                        max="250"
+                                        step="0.1"
+                                        required>
+                                </div>
+
+                            </div>
+
+                            <!-- DONATION HISTORY -->
+                            <h6 class="border-bottom pb-2 mt-4">Donation History</h6>
+
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Last Whole-Blood Donation Date
+                                </label>
+
+                                <input
+                                    type="date"
+                                    name="last_donation_date"
+                                    class="form-control"
+                                    value="{{ donor['last_donation_date'] or '' }}">
+
+                                <small class="text-muted">
+                                    Leave blank if this is your first donation.
+                                </small>
+                            </div>
+
+                            <!-- HEALTH SCREENING -->
+                            <h6 class="border-bottom pb-2 mt-4">Health Screening</h6>
+
+                            <div class="row">
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Hemoglobin (g/dL)</label>
+
+                                    <input
+                                        type="number"
+                                        name="hemoglobin"
+                                        class="form-control"
+                                        value="{{ donor['hemoglobin'] or '' }}"
+                                        min="0"
+                                        max="25"
+                                        step="0.1"
+                                        required>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Pallor Observed</label>
+
+                                    <select
+                                        name="pallor_observed"
+                                        class="form-select"
+                                        required>
+
+                                        <option
+                                            value="No"
+                                            {% if donor['pallor_observed'] == 'No' %}selected{% endif %}>
+                                            No
+                                        </option>
+
+                                        <option
+                                            value="Yes"
+                                            {% if donor['pallor_observed'] == 'Yes' %}selected{% endif %}>
+                                            Yes
+                                        </option>
+
+                                    </select>
+                                </div>
+
+                            </div>
+
+                            <!-- CONSENT -->
+                            <div class="form-check mt-3 mb-4">
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    name="consent"
+                                    id="consent"
+                                    {% if donor['consent'] == 1 %}checked{% endif %}>
+
+                                <label class="form-check-label" for="consent">
+                                    I consent to the use of my donor information for this project.
+                                </label>
+                            </div>
+
+                            <!-- CONTACT DETAILS -->
+                            <h6 class="border-bottom pb-2 mt-4">Contact Details</h6>
+
+                            <div class="row">
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Phone</label>
+
+                                    <input
+                                        type="text"
+                                        name="phone"
+                                        class="form-control"
+                                        value="{{ donor['phone'] }}"
+                                        required>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email</label>
+
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        class="form-control"
+                                        value="{{ donor['email'] or '' }}">
+                                </div>
+
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Location</label>
+
+                                    <input
+                                        type="text"
+                                        name="location"
+                                        class="form-control"
+                                        value="{{ donor['location'] }}"
+                                        required>
+                                </div>
+
+                            </div>
+
+                            <!-- SAVE BUTTON -->
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-danger">
+                                    Save Changes
+                                </button>
+                            </div>
+
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- FIREBASE COMPAT SDK -->
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-messaging-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {{ firebase_config | tojson }};
+
+        const notificationButton =
+            document.getElementById("enableNotifications");
+
+        const notificationStatus =
+            document.getElementById("notificationStatus");
+
+        function showNotificationStatus(type, message) {
+            notificationStatus.innerHTML =
+                `<div class="alert alert-${type}">${message}</div>`;
+        }
+
+        async function registerForNotifications() {
+            if (!("Notification" in window)) {
+                showNotificationStatus(
+                    "danger",
+                    "This browser does not support notifications."
+                );
+                return;
+            }
+
+            if (!("serviceWorker" in navigator)) {
+                showNotificationStatus(
+                    "danger",
+                    "This browser does not support service workers."
+                );
+                return;
+            }
+
+            if (!window.isSecureContext) {
+                showNotificationStatus(
+                    "danger",
+                    "Notifications require HTTPS. Localhost and 127.0.0.1 are also supported for development."
+                );
+                return;
+            }
+
+            try {
+                notificationButton.disabled = true;
+
+                showNotificationStatus(
+                    "info",
+                    "Requesting notification permission..."
+                );
+
+                const permission =
+                    await Notification.requestPermission();
+
+                if (permission !== "granted") {
+                    showNotificationStatus(
+                        "warning",
+                        "Notification permission was not granted."
+                    );
+                    return;
+                }
+
+                firebase.initializeApp(firebaseConfig);
+
+                const messaging = firebase.messaging();
+
+                const serviceWorkerRegistration =
+                    await navigator.serviceWorker.register(
+                        "/firebase-messaging-sw.js",
+                        {
+                            scope: "/"
+                        }
+                    );
+
+                await navigator.serviceWorker.ready;
+
+                const token = await messaging.getToken({
+                    vapidKey: firebaseConfig.vapidKey,
+                    serviceWorkerRegistration
+                });
+
+                if (!token) {
+                    throw new Error(
+                        "Firebase did not return an FCM registration token."
+                    );
+                }
+
+                const response = await fetch(
+                    "/save-fcm-token",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        credentials: "same-origin",
+                        body: JSON.stringify({
+                            token: token
+                        })
+                    }
+                );
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(
+                        result.message ||
+                        "The FCM token could not be saved."
+                    );
+                }
+
+                localStorage.setItem(
+                    "bloodDonorFCMToken",
+                    token
+                );
+
+                messaging.onMessage((payload) => {
+                    console.log(
+                        "Foreground FCM message:",
+                        payload
+                    );
+
+                    const title =
+                        payload.notification?.title ||
+                        "Blood Donor Emergency";
+
+                    const body =
+                        payload.notification?.body ||
+                        "An emergency blood request has been received.";
+
+                    if (
+                        Notification.permission === "granted"
+                    ) {
+                        new Notification(
+                            title,
+                            {
+                                body: body,
+                                icon: "/static/favicon.ico",
+                                tag:
+                                    payload.data?.blood_group
+                                        ? `blood-request-${payload.data.blood_group}`
+                                        : "blood-request"
+                            }
+                        );
+                    }
+                });
+
+                showNotificationStatus(
+                    "success",
+                    "<strong>Notifications enabled!</strong><br>" +
+                    "This browser is registered for emergency blood requests."
+                );
+
+            } catch (error) {
+                console.error(
+                    "Notification setup error:",
+                    error
+                );
+
+                let message =
+                    error?.message ||
+                    "Unknown notification error.";
+
+                if (
+                    error?.code ===
+                    "messaging/permission-blocked"
+                ) {
+                    message =
+                        "Notifications are blocked for this site. Allow notifications in your browser site settings and try again.";
+                }
+
+                showNotificationStatus(
+                    "danger",
+                    "<strong>Could not enable notifications.</strong><br>" +
+                    message
+                );
+
+            } finally {
+                notificationButton.disabled = false;
+            }
+        }
+
+        notificationButton.addEventListener(
+            "click",
+            registerForNotifications
+        );
+
+        window.addEventListener(
+            "load",
+            async () => {
+                if (
+                    "Notification" in window &&
+                    Notification.permission === "granted"
+                ) {
+                    try {
+                        await navigator.serviceWorker.register(
+                            "/firebase-messaging-sw.js",
+                            { scope: "/" }
+                        );
+                    } catch (error) {
+                        console.error(
+                            "Service worker registration error:",
+                            error
+                        );
+                    }
+                }
+            }
+        );
+    </script>
+
+</body>
+</html>
